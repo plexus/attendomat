@@ -27,7 +27,7 @@
 (defn ^:export popup-attendee-selector []
   (.. (spreadsheet-ui)
       (showModalDialog (.. js/HtmlService
-                           (createHtmlOutputFromFile "attendee selector")
+                           (createHtmlOutputFromFile "attendee_selector")
                            (setWidth 400)
                            (setHeight 300))
                        "Testing dialog thing"))
