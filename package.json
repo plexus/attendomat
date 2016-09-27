@@ -1,0 +1,6 @@
+{
+  "name": "attendomat",
+  "dependencies": {
+    "node-google-apps-script": "^1.1.5"
+  }
+}
