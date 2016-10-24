@@ -19,7 +19,7 @@ Copy the contents of `export/Code.gs` into the script editor.
 For each HTML file under export, create a HTML file in the script editor (File >
 New > HTML file) with the same name and contents.
 
-## License
+## License ##
 
 Copyright © 2016 Arne Brasseur
 
