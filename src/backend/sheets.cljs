@@ -1,4 +1,4 @@
-(ns attendomat.sheets)
+(ns backend.sheets)
 
 (def sheet-app js/SpreadsheetApp)
 (def html-service js/HtmlService)

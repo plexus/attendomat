@@ -1,8 +1,8 @@
-(ns attendomat.core
+(ns backend.core
   (:require [attendomat.entry-points]
             [attendomat.attendees :refer [parse-attendee-data]]
-            [attendomat.sheets :as sh]
-            [attendomat.logger :refer [enable-logger-print!]]
+            [backend.sheets :as sh]
+            [backend.logger :refer [enable-logger-print!]]
             [attendomat.transit :refer [write-transit]]))
 
 (enable-logger-print!)

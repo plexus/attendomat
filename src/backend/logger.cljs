@@ -1,4 +1,4 @@
-(ns attendomat.logger)
+(ns backend.logger)
 
 (defn enable-logger-print!
   "Set *print-fn* to Logger.log"

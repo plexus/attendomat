@@ -30858,3 +30858,9 @@ _Xml.ContentType.prototype.PROCESSINGINSTRUCTION;
  * @type {_Xml.ContentType}
  */
 _Xml.ContentType.prototype.TEXT;
+
+var google = {};
+google.script = {};
+google.script.run = function() {};
+google.script.run.withSuccessHandler = function() {};
+google.script.run.withFailureHandler = function() {};

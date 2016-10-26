@@ -5,9 +5,8 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/clojurescript "1.9.229"]
                  [com.cognitect/transit-cljs "0.8.239"]
+                 [re-frame "0.8.0"]
                  [reagent "0.6.0"]]
-
-  :source-paths ["gas-src"]
 
   :plugins [[lein-cljsbuild "1.1.4"]]
 
@@ -15,28 +14,32 @@
 
   :cljsbuild {:builds
               {:gui-dev
-               {:source-paths ["gui-src"]
-                :figwheel true
-                :compiler {:main attendomat.gui
+               {:source-paths ["src"]
+                :figwheel {:on-jsload "frontend.core/mount-root"}
+                :compiler {:main frontend.core
                            :optimizations :none
                            :asset-path "http://localhost:3449/js/gui-dev"
                            :output-to "resources/public/js/gui-dev.js"
-                           :output-dir "resources/public/js/gui-dev"}}
+                           :output-dir "resources/public/js/gui-dev"
+                           :foreign-libs [{:file "resources/entry_points.js"
+                                           :provides ["attendomat.entry-points"]}]}}
                :gui-prod
-               {:source-paths ["gui-src"]
-                :compiler {:main attendomat.gui
+               {:source-paths ["src"]
+                :compiler {:main frontend.core
                            :optimizations :advanced
                            :output-to "export/gui.js"
-                           :output-dir "target/gui"}}
+                           :output-dir "target/gui"
+                           :foreign-libs [{:file "resources/entry_points.js"
+                                           :provides ["attendomat.entry-points"]}]}}
                :main
-               {:source-paths ["gas-src"]
-                :compiler {:main attendomat.core
+               {:source-paths ["src"]
+                :compiler {:main backend.core
                            :optimizations :advanced
                            :output-to "export/Code.gs"
                            :output-dir "target/main"
                            :pretty-print false
                            :externs ["resources/gas.ext.js"]
-                           :foreign-libs [{:file "gas-src/entry_points.js"
+                           :foreign-libs [{:file "resources/entry_points.js"
                                            :provides ["attendomat.entry-points"]}]}}}}
 
   :profiles
