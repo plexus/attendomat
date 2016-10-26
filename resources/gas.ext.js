@@ -30861,6 +30861,6 @@ _Xml.ContentType.prototype.TEXT;
 
 var google = {};
 google.script = {};
-google.script.run = function() {};
-google.script.run.withSuccessHandler = function() {};
-google.script.run.withFailureHandler = function() {};
+google.script.run = {};
+google.script.run.withSuccessHandler = {};
+google.script.run.withFailureHandler = {};
