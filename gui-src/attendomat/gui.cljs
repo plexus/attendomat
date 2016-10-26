@@ -4,7 +4,6 @@
             [goog.object :as obj]
             [cognitect.transit :as t]))
 
-
 (enable-console-print!)
 
 (defonce transit-writer (t/writer :json))
