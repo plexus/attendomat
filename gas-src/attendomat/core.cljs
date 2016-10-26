@@ -2,6 +2,7 @@
   (:require [attendomat.entry-points]))
 
 (def sheet-app js/SpreadsheetApp)
+(def html-service js/HtmlService)
 
 ;; @return Spreadsheet
 (defn active-spreadsheet []
@@ -23,23 +24,27 @@
        array-seq
        (map array-seq)))
 
-;; Sheet
-;; setColumnWidth(columnPosition, width)
-;; setRowHeight(rowPosition, height)
-;; getRange(row, column, numRows, numColumns)
+(defn html-file [name]
+  (.createHtmlOutputFromFile html-service name))
 
-;; Range
-;; setBackground(color)
-;; getBackground(color)
+(defn ^:export on-open-hook [e]
+  (.. (spreadsheet-ui)
+      (showSidebar
+       (.. (html-file js/sidebarFile)
+           (setTitle "ClojureBridge")
+           (setWidth 300)))))
 
-(def ROWS 10)
-(def COLS 10)
+;; function onOpen() {
+;;   SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+;;       .createMenu('Custom Menu')
+;;       .addItem('Show sidebar', 'showSidebar')
+;;       .addToUi();
+;; }
 
-(defn initial-state [])
-
-(def state (atom (initial-state)))
-
-(defn ^:export resize-cells []
-  (let [sheet (active-sheet)]
-    (run! (fn [i] (.setRowHeight (js/SpreadsheetApp.getActiveSheet) i 5)) (range ROWS))
-    #_(run! (fn [i] (.setColumnWidth sheet i 5)) (range COLS))))
+;; function showSidebar() {
+;;   var html = HtmlService.createHtmlOutputFromFile('Page')
+;;       .setTitle('My custom sidebar')
+;;       .setWidth(300);
+;;   SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+;;       .showSidebar(html);
+;; }

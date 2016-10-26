@@ -6,7 +6,7 @@
                  [org.clojure/clojurescript "1.9.229"]
                  [reagent "0.6.0"]]
 
-  :source-paths ["src"]
+  :source-paths ["gas-src"]
 
   :plugins [[lein-cljsbuild "1.1.4"]]
 
@@ -35,7 +35,7 @@
                            :output-dir "target/main"
                            :pretty-print false
                            :externs ["resources/gas.ext.js"]
-                           :foreign-libs [{:file "src/entry_points.js"
+                           :foreign-libs [{:file "gas-src/entry_points.js"
                                            :provides ["attendomat.entry-points"]}]}}}}
 
   :profiles
