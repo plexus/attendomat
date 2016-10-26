@@ -4,6 +4,7 @@
 
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/clojurescript "1.9.229"]
+                 [com.cognitect/transit-cljs "0.8.239"]
                  [reagent "0.6.0"]]
 
   :source-paths ["gas-src"]
@@ -18,7 +19,7 @@
                 :figwheel true
                 :compiler {:main attendomat.gui
                            :optimizations :none
-                           :asset-path "js/gui-dev"
+                           :asset-path "http://localhost:3449/js/gui-dev"
                            :output-to "resources/public/js/gui-dev.js"
                            :output-dir "resources/public/js/gui-dev"}}
                :gui-prod

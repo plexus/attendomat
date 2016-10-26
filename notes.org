@@ -1,0 +1,9 @@
+* Auto-update
+
+  Tried some weird hacks to get the backend code to automatically update, no
+  dice. We're stuck copy pasting. Some snippets for future reference.
+
+  #+BEGIN_SRC javascript
+    document.querySelector('div[aria-label="Code.gs"]').click()
+    document.querySelector('.CodeMirror').CodeMirror.setValue('foo')
+  #+END_SRC

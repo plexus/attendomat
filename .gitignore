@@ -15,5 +15,6 @@ pom.xml.asc
 node_modules
 resources/public/js/gui-dev
 resources/public/js/gui-dev.jsexport/Code.gs
+export/Code.gs
 export/gui.js
 resources/public/js/gui-dev.js
