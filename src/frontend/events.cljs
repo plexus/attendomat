@@ -13,7 +13,12 @@
 
 (reg-event-fx :fetch-attendees [debug]
               (fn [_ _]
-                {:backend {:call [:attendeeData]
+                {:backend {:call [:attendee-data]
+                           :dispatch :reset-attendees}}))
+
+(reg-event-fx :add-event [debug]
+              (fn [_ [_ type & args]]
+                {:backend {:call [:add-event type args]
                            :dispatch :reset-attendees}}))
 
 (reg-event-db :reset-attendees [debug]

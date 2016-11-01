@@ -8,6 +8,6 @@ function onEdit(e) {
   return backend.core.on_edit_hook(e);
 }
 
-function attendeeData() {
-  return backend.core.attendee_data();
+function backendCall(name, args) {
+  return backend.core.backend_call(name, args);
 }

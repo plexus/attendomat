@@ -1,3 +1,6 @@
+* Links
+  - [[https://docs.google.com/spreadsheets/d/1JR9ypq9bACApfb5ARVHvl5dGhvBOATncE0ofgWrzQj4/edit#gid=2088807707][spreadsheet]]
+
 * Auto-update
 
   Tried some weird hacks to get the backend code to automatically update, no

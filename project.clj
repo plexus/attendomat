@@ -6,7 +6,8 @@
                  [org.clojure/clojurescript "1.9.229"]
                  [com.cognitect/transit-cljs "0.8.239"]
                  [re-frame "0.8.0"]
-                 [reagent "0.6.0"]]
+                 [reagent "0.6.0"]
+                 [garden "1.3.2"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]]
 
@@ -21,6 +22,7 @@
                            :asset-path "http://localhost:3449/js/gui-dev"
                            :output-to "resources/public/js/gui-dev.js"
                            :output-dir "resources/public/js/gui-dev"
+                           :preloads [devtools.preload]
                            :foreign-libs [{:file "resources/entry_points.js"
                                            :provides ["attendomat.entry-points"]}]}}
                :gui-prod
@@ -45,6 +47,14 @@
   :profiles
   {:dev
    {:dependencies [[figwheel-sidecar "0.5.7"]
-                   [com.cemerick/piggieback "0.2.1"]]
+                   [com.cemerick/piggieback "0.2.1"]
+                   ;;[binaryage/dirac "RELEASE"]
+                   [binaryage/devtools "0.8.2"]]
+
+    ;; :repl-options {:init (do
+    ;;                        (require 'dirac.agent)
+    ;;                        (dirac.agent/boot!))
+    ;;                :port 8230
+    ;;                :nrepl-middleware [dirac.nrepl/middleware]}
 
     :plugins      [[lein-figwheel "0.5.7"]]}})

@@ -15,6 +15,11 @@
 (defn find-sheet [name]
   (.getSheetByName (active-spreadsheet) name))
 
+(defn find-or-create-sheet [name]
+  (if-let [sh (find-sheet name)]
+    sh
+    (.insertSheet (active-spreadsheet) name)))
+
 (defn spreadsheet-ui []
   (.getUi sheet-app))
 
@@ -22,6 +27,9 @@
   (->> (.. sheet getDataRange getValues)
        array-seq
        (map array-seq)))
+
+(defn append-row [sheet vals]
+  (.appendRow sheet (clj->js vals)))
 
 (defn html-file [name]
   (.createHtmlOutputFromFile html-service name))
