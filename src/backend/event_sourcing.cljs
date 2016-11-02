@@ -33,7 +33,7 @@
 
 (defn apply-event [attendees {:keys [timestamp type args]}]
   (case type
-    "INVITE" (let [email (first args)
+    "INVITED" (let [email (first args)
                    path [email :state]
                    old-state (get-in attendees path)]
                (if (= old-state :waiting)
@@ -55,7 +55,7 @@
                                        :state :waiting}
                                      {:email "f@g.be"
                                       :state :missing}])
-      events [{:type "INVITE" :args ["x@y.be"]}
-              {:type "INVITE" :args ["f@g.be"]}]]
+      events [{:type "INVITED" :args ["x@y.be"]}
+              {:type "INVITED" :args ["f@g.be"]}]]
   (vals (reduce (fn [ats ev]
                   (apply-event ats ev)) attendees events)))

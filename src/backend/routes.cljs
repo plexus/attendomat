@@ -12,5 +12,5 @@
   (let [date (js/Date.)
         sheet-name (str "Batch " (.getDay date) "." (.getMonth date) " " (.getHours date) ":" (.getMinutes date)) ]
     (doseq [at attendees]
-      (es/add-event "INVITE" [(:email at)]))
+      (es/add-event "INVITED" [(:email at)]))
     (attendee-data)))
