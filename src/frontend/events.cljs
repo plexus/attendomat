@@ -2,7 +2,8 @@
     (:require [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx reg-fx dispatch debug]]
               [frontend.db :as db]
               [frontend.backend-calls :refer [server-call]]
-              [attendomat.attendees :as attendees]))
+              [attendomat.attendees :as attendees]
+              [clojure.set :as set]))
 
 (reg-fx :backend (fn [{call :call disp :dispatch}]
                       (server-call call
@@ -28,6 +29,11 @@
                   {:backend {:call [:create-invite-batch selection]
                              :dispatch :reset-attendees}})))
 
+(reg-event-fx :select-attendee [debug]
+              (fn [{:keys [db]} [_ at]]
+                {:db (assoc db :selected-attendee at)
+                 :dispatch [:transition-state :selected-attendee]}))
+
 (reg-event-db :reset-attendees [debug]
               (fn [db [_ atts]]
                 (assoc db :attendees atts)))
@@ -39,3 +45,12 @@
 (reg-event-db :set-filter-value [debug]
              (fn [db [_ new-value]]
                (assoc db :filter-value new-value)))
+
+
+(reg-event-db :show-state [debug]
+             (fn [db [_ state]]
+               (update-in db [:show-states] conj state)))
+
+(reg-event-db :hide-state [debug]
+              (fn [db [_ state]]
+                (update-in db [:show-states] #(set/difference % #{state}))))

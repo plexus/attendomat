@@ -1,26 +1,39 @@
 (ns frontend.views
-  (:require [frontend.helpers :refer [on-change-handler on-change-dispatch]]
+  (:require [frontend.helpers :refer [on-change-handler on-change-dispatch present?]]
             [frontend.styles :as styles]
             [garden.core :refer [css]]
             [reagent.core :as r]
             [re-frame.core :as re-frame :refer [dispatch subscribe]]))
 
+
 (defn filter-checkboxes []
-  [:div#filter-checkboxes
-   (map (fn [state]
-           (let [id (str "filter-" state)]
-             [:label {:for id :class (str "state-" state)}
-              [:input {:type "checkbox" :name id }]
-              state]))
-         ["waiting" "invited" "accepted" "cancelled"])])
+  (let [show-states (subscribe [:show-states])]
+    (fn []
+      (println @show-states)
+      [:div#filter-checkboxes
+       (doall (map (fn [state]
+                     (let [kstate (keyword state)
+                           id (str "filter-" state)]
+                       [:label {:for id
+                                :class (str "state-" state)
+                                :key state}
+                        [:input {:type "checkbox"
+                                 :name id
+                                 :id id
+                                 :checked (if (@show-states kstate) true false)
+                                 :on-change #(if (.. % -target -checked)
+                                               (dispatch [:show-state kstate])
+                                               (dispatch [:hide-state kstate]))}]
+                        state]))
+                   ["waiting" "invited" "accepted" "cancelled"]))])))
 
 (defn filter-box []
   (let [filter-value (subscribe [:filter-value])]
     (fn []
-
       [:input.text {:type "text"
                     :value @filter-value
                     :on-change (on-change-dispatch :set-filter-value)}])))
+
 
 (defn attendee-list []
   (let [atts (subscribe [:attendees])]
@@ -28,7 +41,9 @@
      (for [a @atts]
        (let [name-str (str (:first-name a) " " (:last-name a))]
          [:div.entry {:key (:email a)
-                      :class (str "state-" (name (:state a)))} name-str]))]))
+                      :class (str "state-" (name (:state a)))
+                      :on-click #(dispatch [:select-attendee a])}
+          name-str]))]))
 
 
 (defn action-buttons []
@@ -40,8 +55,8 @@
   [:div#attendee-list-panel
    [filter-checkboxes]
    [filter-box]
-   [attendee-list]
-   [action-buttons]])
+   [action-buttons]
+   [attendee-list]])
 
 (defn invite-more-panel []
   (let [invite-count (r/atom "")]
@@ -57,8 +72,63 @@
                              (dispatch [:transition-state :attendee-list]))}
         "Invite"]])))
 
+(defn selected-attendee-panel []
+  (let [attendee (subscribe [:selected-attendee])]
+    (fn []
+      (let [{:keys [first-name
+                    last-name
+                    email
+                    state
+                    age
+                    gender
+                    experience
+                    language-prefs
+                    food-prefs
+                    assistance
+                    childcare
+                    heard-of-us
+                    comment]} @attendee]
+        [:div#selected-attendee
+         [:p [:a {:on-click #(dispatch [:transition-state :attendee-list])} "<--"]]
+         [:p {:class (str "state-" (name state))} first-name " " last-name " (" (name state) ")"]
+         [:p email]
+         [:p age]
+         [:p gender]
+         (if (present? experience)
+           [:div
+            [:h3 "Experience"]
+            [:p experience]])
+         ;; (if (present? language-prefs)
+         ;;   [:div
+         ;;    [:h3 "language-prefs"]
+         ;;    [:p language-prefs]])
+         (if (present? food-prefs)
+           [:div
+            [:h3 "Food preference"]
+            [:p food-prefs]])
+         (if (present? assistance)
+           [:div
+            [:h3 "Assistance"]
+            [:p assistance]])
+         (if (present? childcare)
+           [:div
+            [:h3 "Childcare"]
+            [:p childcare]])
+         (if (present? heard-of-us)
+           [:div
+            [:h3 "How did you hear of us"]
+            [:p heard-of-us]])
+         (if (present? comment)
+           [:div
+            [:h3 "Comment"]
+            [:p comment]])
+         (when (= :invited state)
+           (list [:button "Accept"]
+                 [:button "Cancel"])
+           )
+         ]))))
+
 (defn main-panel []
-  (js/console.log "drawing main panel")
   (let [state (subscribe [:state])]
     (fn []
       [:div
@@ -66,4 +136,5 @@
        (case @state
          :attendee-list [attendee-list-panel]
          :invite-more   [invite-more-panel]
+         :selected-attendee   [selected-attendee-panel]
          [:div (prn-str @state)])])))

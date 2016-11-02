@@ -3,4 +3,5 @@
 (def default-db
   {:state :attendee-list
    :attendees []
-   :filter-value ""})
+   :filter-value ""
+   :show-states #{:waiting :invited :accepted :cancelled}})
