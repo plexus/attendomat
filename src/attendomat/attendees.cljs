@@ -22,10 +22,16 @@
 
 (defn parse-attendee-data [[header & rows]]
   (map (fn [row]
-         (into {}
+         (into {:state :waiting}
                (map-indexed (fn [idx heading]
                               (let [field (nth row idx)
                                     field-name (get fields heading)]
                                 (if-not (= field "")
                                   [field-name field]))) header)))
        rows))
+
+(defn randomly-select [attendees state count]
+  (->> attendees
+       (filter #(= state (:state %)))
+       shuffle
+       (take count)))

@@ -2,8 +2,8 @@
   :license {:name "Mozilla Public License 2.0"
             :url "https://www.mozilla.org/en-US/MPL/2.0/"}
 
-  :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
-                 [org.clojure/clojurescript "1.9.229"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
+                 [org.clojure/clojurescript "1.9.293"]
                  [com.cognitect/transit-cljs "0.8.239"]
                  [re-frame "0.8.0"]
                  [reagent "0.6.0"]
