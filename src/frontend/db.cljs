@@ -2,4 +2,5 @@
 
 (def default-db
   {:state :attendee-list
-   :attendees []})
+   :attendees []
+   :filter-value ""})

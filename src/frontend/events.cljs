@@ -8,7 +8,7 @@
                       (server-call call
                                    (fn [res] (dispatch [disp res])))))
 
-(reg-event-db :initialize-db
+(reg-event-db :initialize-db [debug]
               (fn  [_ _]
                 db/default-db))
 
@@ -35,3 +35,7 @@
 (reg-event-db :transition-state [debug]
              (fn [db [_ new-state]]
                (assoc db :state new-state)))
+
+(reg-event-db :set-filter-value [debug]
+             (fn [db [_ new-value]]
+               (assoc db :filter-value new-value)))

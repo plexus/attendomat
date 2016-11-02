@@ -17,6 +17,7 @@
                   (.getElementById js/document "attendomat")))
 
 (defn ^:export init []
+  (js/console.log "Init called")
   (re-frame/dispatch-sync [:initialize-db])
   (re-frame/dispatch [:fetch-attendees])
   (dev-setup)
