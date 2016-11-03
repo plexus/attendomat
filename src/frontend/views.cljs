@@ -15,7 +15,7 @@
                      (let [kstate (keyword state)
                            id (str "filter-" state)]
                        [:label {:for id
-                                :class (str "state-" state)
+                                :class (str "state-filter-checkbox state-" state)
                                 :key state}
                         [:input {:type "checkbox"
                                  :name id

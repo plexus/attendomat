@@ -22,7 +22,9 @@
     {:display "flex"
      :flex-wrap "wrap"
      :margin-bottom "0.5em"}
-    [:label {:width "50%"}]]
+    [:label {:width "50%"}]
+    [:.state-filter-checkbox {:padding-top "0.1em"
+                              :padding-bottom "0.2em"}]]
 
    [:#action-buttons {:margin-bottom "1em"
                       :display "flex"}
