@@ -5,27 +5,31 @@
             [reagent.core :as r]
             [re-frame.core :as re-frame :refer [dispatch subscribe]]))
 
+(defn filter-checkbox [state]
+  (let [state-filter (subscribe [:state-filter state])]
+    (fn []
+      (let [{:keys [caption checked count]} @state-filter
+            state-str (name state)
+            id (str "filter-" state)]
+        [:label {:for id
+                 :class (str "state-filter-checkbox state-" state-str)
+                 :key state-str}
+         [:input {:type "checkbox"
+                  :name id
+                  :id id
+                  :checked checked
+                  :on-change #(if (.. % -target -checked)
+                                (dispatch [:show-state state])
+                                (dispatch [:hide-state state]))}]
+         caption " (" count ")"]))))
+
 
 (defn filter-checkboxes []
-  (let [show-states (subscribe [:show-states])]
-    (fn []
-      (println @show-states)
-      [:div#filter-checkboxes
-       (doall (map (fn [state]
-                     (let [kstate (keyword state)
-                           id (str "filter-" state)]
-                       [:label {:for id
-                                :class (str "state-filter-checkbox state-" state)
-                                :key state}
-                        [:input {:type "checkbox"
-                                 :name id
-                                 :id id
-                                 :checked (if (@show-states kstate) true false)
-                                 :on-change #(if (.. % -target -checked)
-                                               (dispatch [:show-state kstate])
-                                               (dispatch [:hide-state kstate]))}]
-                        state]))
-                   ["waiting" "invited" "accepted" "cancelled"]))])))
+  [:div#filter-checkboxes
+   [filter-checkbox :waiting]
+   [filter-checkbox :invited]
+   [filter-checkbox :accepted]
+   [filter-checkbox :cancelled]])
 
 (defn filter-box []
   (let [filter-value (subscribe [:filter-value])]
@@ -34,20 +38,19 @@
                     :value @filter-value
                     :on-change (on-change-dispatch :set-filter-value)}])))
 
-
 (defn attendee-list []
   (let [atts (subscribe [:attendees])]
-    [:div#attendee-list
-     (for [a @atts]
-       (let [name-str (str (:first-name a) " " (:last-name a))]
-         [:div.entry {:key (:email a)
-                      :class (str "state-" (name (:state a)))
-                      :on-click #(dispatch [:select-attendee a])}
-          name-str]))]))
-
+    (fn []
+      [:div#attendee-list
+       (for [a @atts]
+         (let [name-str (str (:first-name a) " " (:last-name a))]
+           [:div.entry {:key (:email a)
+                        :class (str "state-" (name (:state a)))
+                        :on-click #(dispatch [:select-attendee a])}
+            name-str]))])))
 
 (defn action-buttons []
-  [:div#action-buttons
+  [:div#action-buttons.buttons
    [:button {:on-click #(dispatch [:fetch-attendees])} "Refresh"]
    [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]])
 
@@ -81,7 +84,8 @@
                     state
                     age
                     gender
-                    experience
+                    experience-other
+                    experience-clojure
                     language-prefs
                     food-prefs
                     assistance
@@ -94,10 +98,14 @@
          [:p email]
          [:p age]
          [:p gender]
-         (if (present? experience)
+         (if (present? experience-other)
            [:div
             [:h3 "Experience"]
-            [:p experience]])
+            [:p experience-other]])
+         (if (present? experience-clojure)
+           [:div
+            [:h3 "Experience in Clojure"]
+            [:p experience-clojure]])
          ;; (if (present? language-prefs)
          ;;   [:div
          ;;    [:h3 "language-prefs"]
@@ -122,11 +130,14 @@
            [:div
             [:h3 "Comment"]
             [:p comment]])
-         (when (= :invited state)
-           (list [:button "Accept"]
-                 [:button "Cancel"])
-           )
-         ]))))
+         [:div.buttons
+          (if-not (= state :invited)
+            [:button.state-invited "Invite"])
+          (if-not (= state :accepted)
+            [:button.state-accepted "Accept"])
+          (if-not (= state :cancelled)
+            [:button.state-cancelled "Cancel"])
+          ]]))))
 
 (defn main-panel []
   (let [state (subscribe [:state])]

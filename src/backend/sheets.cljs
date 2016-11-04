@@ -33,3 +33,9 @@
 
 (defn html-file [name]
   (.createHtmlOutputFromFile html-service name))
+
+(defn error-sheet []
+  (find-or-create-sheet "*ERRORS*"))
+
+(defn error! [& args]
+  (append-row (error-sheet) args))

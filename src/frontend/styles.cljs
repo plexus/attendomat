@@ -26,16 +26,16 @@
     [:.state-filter-checkbox {:padding-top "0.1em"
                               :padding-bottom "0.2em"}]]
 
-   [:#action-buttons {:margin-bottom "1em"
-                      :display "flex"}
-    [:button {:border "1px solid #222222"
-              :border-radius "0.5em"
-              :background-color "#99bbee"
-              :color "#111111"
-              :padding "0.5em"
-              :margin-right "1em"
-              :flex "1 1 0"}]
-    [:button:last-child {:margin-right "0"}]]
+   [:#action-buttons {:margin-bottom "1em"}]
+   [:.buttons {:display "flex"}]
+   [:button {:border "1px solid #222222"
+             :border-radius "0.5em"
+             :background-color "#99bbee"
+             :color "#111111"
+             :padding "0.5em"
+             :margin-right "1em"
+             :flex "1 1 0"}]
+   [:button:last-child {:margin-right "0"}]
 
    (mapv (fn [[state color]]
            [(keyword (str ".state-" (name state))) {:background-color color}])

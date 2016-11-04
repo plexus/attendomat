@@ -13,12 +13,6 @@
 (defn event-sheet []
   (sh/find-or-create-sheet "*EVENTS*"))
 
-(defn error-sheet []
-  (sh/find-or-create-sheet "*ERRORS*"))
-
-(defn error! [& args]
-  (sh/append-row (error-sheet) args))
-
 (defn event-data []
   (->> (event-sheet)
        sh/data-range
@@ -39,7 +33,7 @@
                (if (= old-state :waiting)
                  (assoc-in attendees path :invited)
                  (do
-                   (error! (str "Tried to invite " email " but current state is already :" (name old-state) " instead of :waiting"))
+                   (sh/error! (str "Tried to invite " email " but current state is already :" (name old-state) " instead of :waiting"))
                    attendees)))
     attendees))
 

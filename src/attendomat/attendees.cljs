@@ -1,4 +1,5 @@
-(ns attendomat.attendees)
+(ns attendomat.attendees
+  (:require [backend.sheets :as sh]))
 
 (def fields
   {"Timestamp" :timestamp
@@ -12,12 +13,12 @@
    "Do you have any food allergies or dietary preferences? (e.g. vegan, vegetarian, GF)" :food-prefs
    "Do you need any kind of assistance, or have health issues you would like us to know about? " :assistance
    "Do you need support with child care during the event? (financial or at-the-event care)" :childcare
-   "Have you tried any programming before? If yes, what sort of things? " :experience
-   "Have you tried programming with Clojure before? " :experience
+   "Have you tried any programming before? If yes, what sort of things? " :experience-other
+   "Have you tried programming with Clojure before? " :experience-clojure
    "How did you hear about ClojureBridge Berlin? " :heard-of-us
    "I have read the Code of Conduct, and agree to honor it." :agree-coc
    "If we get T-Shirts, what would be your size?" :tshirt-size
-   "Is there anything else you would like to mention? " :comment
+   "Is there anything else you would like to mention?" :comment
    "Which language do you prefer?" :language-prefs})
 
 (defn parse-attendee-data [[header & rows]]
@@ -26,7 +27,10 @@
                (map-indexed (fn [idx heading]
                               (let [field (nth row idx)
                                     field-name (get fields heading)]
-                                (if-not (= field "")
+
+                                (when-not (= field "")
+                                  (when (and (not (= heading "")) (nil? field-name))
+                                    (sh/error! (str "No field mapping for \"" heading "\"")))
                                   [field-name field]))) header)))
        rows))
 
