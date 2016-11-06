@@ -85,8 +85,16 @@ google-chrome-unstable --allow-running-insecure-content
 ```
 
 Now reload the sheet, and assuming you have the right `Code.gs` and
-`sidebar-figwheel.html` set up, the sidebar should pop up with a list of
-attendees.
+`sidebar-figwheel.html` set up, the sidebar should pop up with the Attendomat GUI.
+
+## Granting Permission
+
+Normally the names of attendees should show up in the sidebar, but chances are
+they won't, because the code doesn't yet have access to the data.
+
+Go to the script editor again (Tools > Script Editor), from the "Select a
+Function" dropdown select "onOpen", then press the "Play" button (a right
+pointing triangle). A dialog will pop up where you can grant permission.
 
 ## Deploying
 
