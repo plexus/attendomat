@@ -134,7 +134,9 @@
           (if-not (= state :invited)
             [:button.state-invited "Invite"])
           (if-not (= state :accepted)
-            [:button.state-accepted "Accept"])
+            [:button.state-accepted {
+              :on-click #(dispatch [:add-event "ACCEPTED" email])
+            } "Accept"])
           (if-not (= state :cancelled)
             [:button.state-cancelled "Cancel"])
           ]]))))
