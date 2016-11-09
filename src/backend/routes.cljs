@@ -6,7 +6,8 @@
   (es/attendee-data))
 
 (defn ^:export add-event [type args]
-  (es/add-event type args))
+  (es/add-event type args)
+  (attendee-data))
 
 (defn ^:export create-invite-batch [attendees]
   (let [date (js/Date.)

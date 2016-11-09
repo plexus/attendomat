@@ -23,7 +23,8 @@
 
 (defn parse-attendee-data [[header & rows]]
   (map (fn [row]
-         (into {:state :waiting}
+         (into {:state :waiting
+                :history []}
                (map-indexed (fn [idx heading]
                               (let [field (nth row idx)
                                     field-name (get fields heading)]

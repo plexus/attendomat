@@ -37,6 +37,14 @@
              :flex "1 1 0"}]
    [:button:last-child {:margin-right "0"}]
 
+   [:.back-arrow {:font-size "1.5em"}]
+   [:.user-name {:text-decoration "underline"
+                 :font-size "1.2em"}]
+   [:.label {:display "inline-block"
+             :padding "0.4em 0.75em"
+             :float "right"
+             :border-radius "0.3em"}]
+
    (mapv (fn [[state color]]
            [(keyword (str ".state-" (name state))) {:background-color color}])
          state-colors)])

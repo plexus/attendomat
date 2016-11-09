@@ -10,7 +10,12 @@
 (reg-sub :state (fn [db] (:state db)))
 (reg-sub :filter-value (fn [db] (:filter-value db)))
 (reg-sub :show-states (fn [db] (:show-states db)))
-(reg-sub :selected-attendee (fn [db] (:selected-attendee db)))
+(reg-sub :selected-attendee
+         (fn [db]
+           (first
+            (filter
+             #(= (:email %) (:selected-attendee db))
+             (:attendees db))) ))
 
 ;; Filtered using the search box
 (reg-sub

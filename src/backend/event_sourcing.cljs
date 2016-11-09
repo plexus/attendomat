@@ -2,6 +2,11 @@
   (:require [backend.sheets :as sh]
             [attendomat.attendees :refer [parse-attendee-data]]))
 
+(def event->state {"WAITING" :waiting
+                   "INVITED" :invited
+                   "ACCEPTED" :accepted
+                   "CANCELLED" :cancelled})
+
 (defn attendee-data-raw []
   (-> (sh/find-sheet "Form Responses 1")
       sh/data-range
@@ -26,26 +31,17 @@
                  (into [(js/Date.) type] args)))
 
 (defn attendee-state [attendees email]
-  (get-in attendees [email :state])
-)
+  (get-in attendees [email :state]))
 
-(defn update-attendee-state [attendees email new-state]
-  (assoc-in attendees [email :state] new-state)
-)
+(defn update-attendee-state [attendees email new-state event]
+  (-> attendees
+      (assoc-in [email :state] new-state)
+      (update-in [email :history] conj (assoc event :state new-state))))
 
-(defn apply-event [attendees {:keys [timestamp type args]}]
-  (case type
-    "INVITED" (let [email (first args)
-                    old-state (attendee-state attendees email)]
-               (if (= old-state :waiting)
-                 (update-attendee-state attendees email :invited)
-                 (do
-                   (sh/error! (str "Tried to invite " email " but current state is already :" (name old-state) " instead of :waiting"))
-                   attendees)))
-    "ACCEPTED" (let [email (first args)
-                     old-state (attendee-state attendees email)]
-                   (update-attendee-state attendees email :accepted))
-    attendees))
+(defn apply-event [attendees {:keys [type args] :as event}]
+  (let [email (first args)
+        new-state (event->state type)]
+    (update-attendee-state attendees email new-state event)))
 
 
 (defn attendee-data []
@@ -56,11 +52,11 @@
                (apply-event ats ev)) attendees events))))
 
 
-#_(let [attendees (attendees-by-email [{:email "x@y.be"
-                                       :state :waiting}
-                                     {:email "f@g.be"
-                                      :state :missing}])
-      events [{:type "INVITED" :args ["x@y.be"]}
-              {:type "INVITED" :args ["f@g.be"]}]]
-  (vals (reduce (fn [ats ev]
-                  (apply-event ats ev)) attendees events)))
+;; (let [attendees (attendees-by-email [{:email "x@y.be"
+;;                                         :state :waiting}
+;;                                        {:email "f@g.be"
+;;                                         :state :missing}])
+;;         events [{:type "INVITED" :args ["x@y.be"]}
+;;                 {:type "INVITED" :args ["f@g.be"]}]]
+;;     (vals (reduce (fn [ats ev]
+;;                     (apply-event ats ev)) attendees events)))

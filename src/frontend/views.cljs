@@ -23,7 +23,6 @@
                                 (dispatch [:hide-state state]))}]
          caption " (" count ")"]))))
 
-
 (defn filter-checkboxes []
   [:div#filter-checkboxes
    [filter-checkbox :waiting]
@@ -46,7 +45,7 @@
          (let [name-str (str (:first-name a) " " (:last-name a))]
            [:div.entry {:key (:email a)
                         :class (str "state-" (name (:state a)))
-                        :on-click #(dispatch [:select-attendee a])}
+                        :on-click #(dispatch [:select-attendee (:email a)])}
             name-str]))])))
 
 (defn action-buttons []
@@ -75,27 +74,35 @@
                              (dispatch [:transition-state :attendee-list]))}
         "Invite"]])))
 
+(defn attendee-state-change-buttons [state email]
+  [:div.buttons
+   (if-not (= state :invited)
+     [:button.state-invited
+      {:on-click #(dispatch [:add-event "INVITED" email])}
+      "Invite"])
+   (if-not (= state :accepted)
+     [:button.state-accepted
+      {:on-click #(dispatch [:add-event "ACCEPTED" email])}
+      "Accept"])
+   (if-not (= state :cancelled)
+     [:button.state-cancelled
+      {:on-click #(dispatch [:add-event "CANCELLED" email])}
+      "Cancel"])])
+
 (defn selected-attendee-panel []
   (let [attendee (subscribe [:selected-attendee])]
     (fn []
-      (let [{:keys [first-name
-                    last-name
-                    email
-                    state
-                    age
-                    gender
-                    experience-other
-                    experience-clojure
-                    language-prefs
-                    food-prefs
-                    assistance
-                    childcare
-                    heard-of-us
-                    comment]} @attendee]
+      (let [{:keys [first-name last-name email state age gender
+                    experience-other experience-clojure language-prefs
+                    food-prefs assistance childcare heard-of-us comment
+                    history]} @attendee]
         [:div#selected-attendee
-         [:p [:a {:on-click #(dispatch [:transition-state :attendee-list])} "<--"]]
-         [:p {:class (str "state-" (name state))} first-name " " last-name " (" (name state) ")"]
+         [:p
+          [:a.back-arrow {:on-click #(dispatch [:transition-state :attendee-list])} "←"]
+          [:span.label {:class (str "state-" (name state))} (name state)]]
+         [:p [:span.user-name  first-name " " last-name]]
          [:p email]
+         [attendee-state-change-buttons state email]
          [:p age]
          [:p gender]
          (if (present? experience-other)
@@ -106,6 +113,14 @@
            [:div
             [:h3 "Experience in Clojure"]
             [:p experience-clojure]])
+         (if (present? heard-of-us)
+           [:div
+            [:h3 "How did you hear of us"]
+            [:p heard-of-us]])
+         (if (present? comment)
+           [:div
+            [:h3 "Comment"]
+            [:p comment]])
          ;; (if (present? language-prefs)
          ;;   [:div
          ;;    [:h3 "language-prefs"]
@@ -122,24 +137,14 @@
            [:div
             [:h3 "Childcare"]
             [:p childcare]])
-         (if (present? heard-of-us)
-           [:div
-            [:h3 "How did you hear of us"]
-            [:p heard-of-us]])
-         (if (present? comment)
-           [:div
-            [:h3 "Comment"]
-            [:p comment]])
-         [:div.buttons
-          (if-not (= state :invited)
-            [:button.state-invited "Invite"])
-          (if-not (= state :accepted)
-            [:button.state-accepted {
-              :on-click #(dispatch [:add-event "ACCEPTED" email])
-            } "Accept"])
-          (if-not (= state :cancelled)
-            [:button.state-cancelled "Cancel"])
-          ]]))))
+         [:div
+          [:h3 "History"]
+          [:table {:width "100%"}
+           (for [{:keys [timestamp state type]} history]
+             [:tr {:key (.toString timestamp)
+                   :class (str "state-" (name state))}
+              [:td (.toDateString timestamp)]
+              [:td  type]])]]]))))
 
 (defn main-panel []
   (let [state (subscribe [:state])]
