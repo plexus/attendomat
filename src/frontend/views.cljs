@@ -1,5 +1,6 @@
 (ns frontend.views
-  (:require [frontend.helpers :refer [on-change-handler on-change-dispatch present?]]
+  (:require [frontend.helpers :refer [on-change-handler on-change-dispatch]]
+            [attendomat.helpers :refer [present?]]
             [frontend.styles :as styles]
             [garden.core :refer [css]]
             [reagent.core :as r]
@@ -51,10 +52,13 @@
 (defn action-buttons []
   [:div#action-buttons.buttons
    [:button {:on-click #(dispatch [:fetch-attendees])} "Refresh"]
-   [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]])
+   [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]
+   [:button {:on-click #(dispatch [:summarize])} "Summarize"]])
 
 (defn attendee-list-panel []
   [:div#attendee-list-panel
+   [:div.top-bar.top-bar--right
+    [:a.button {:on-click #(dispatch [:transition-state :inspector])} "{}"]]
    [filter-checkboxes]
    [filter-box]
    [action-buttons]
@@ -89,6 +93,9 @@
       {:on-click #(dispatch [:add-event "CANCELLED" email])}
       "Cancel"])])
 
+(defn back-button []
+  [:a.back-arrow.button {:on-click #(dispatch [:transition-state :attendee-list])} "←"])
+
 (defn selected-attendee-panel []
   (let [attendee (subscribe [:selected-attendee])]
     (fn []
@@ -97,8 +104,8 @@
                     food-prefs assistance childcare heard-of-us comment
                     history]} @attendee]
         [:div#selected-attendee
-         [:p
-          [:a.back-arrow {:on-click #(dispatch [:transition-state :attendee-list])} "←"]
+         [:div.top-bar
+          [back-button]
           [:span.label {:class (str "state-" (name state))} (name state)]]
          [:p [:span.user-name  first-name " " last-name]]
          [:p email]
@@ -146,13 +153,22 @@
               [:td (.toDateString timestamp)]
               [:td  type]])]]]))))
 
+(defn inspector-panel []
+  (let [attendees (subscribe [:attendees])]
+    (fn []
+      [:div#inspector
+       [:div.top-bar
+        [back-button]]
+       [:textarea {:rows "35" :value (prn-str @attendees)}]])))
+
 (defn main-panel []
   (let [state (subscribe [:state])]
     (fn []
       [:div
        [:style {:type "text/css"} (css styles/styles)]
        (case @state
-         :attendee-list [attendee-list-panel]
-         :invite-more   [invite-more-panel]
-         :selected-attendee   [selected-attendee-panel]
+         :attendee-list      [attendee-list-panel]
+         :invite-more        [invite-more-panel]
+         :selected-attendee  [selected-attendee-panel]
+         :inspector          [inspector-panel]
          [:div (prn-str @state)])])))

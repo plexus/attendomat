@@ -39,3 +39,28 @@
 
 (defn error! [& args]
   (append-row (error-sheet) args))
+
+(defn update-sheet-data [sheet-name data]
+  (let [sheet (find-or-create-sheet sheet-name)]
+    (let [data-col-cnt (apply max (map count data))
+          data-row-cnt (count data)
+          col-cnt (max data-col-cnt (.getLastColumn sheet))
+          row-cnt (max data-row-cnt (.getLastRow sheet))
+          range (.getRange sheet 1 1 row-cnt col-cnt)
+          values (clj->js (repeat row-cnt (repeat col-cnt nil)))]
+      (prn data)
+      (doall
+       (map-indexed
+        (fn [ridx row]
+          (doall
+           (map-indexed
+            (fn [cidx v]
+              (aset values ridx cidx v))
+            row)))
+        data))
+
+      (.setValues range values))))
+
+;; getRange(row, column, numRows, numColumns)
+;; getLastRow()
+;; getLastColumn()
