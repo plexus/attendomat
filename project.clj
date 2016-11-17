@@ -4,6 +4,7 @@
 
   :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/clojurescript "1.9.293"]
+                 [org.clojure/data.csv "0.1.3"]
                  [com.cognitect/transit-cljs "0.8.239"]
                  [re-frame "0.8.0"]
                  [reagent "0.6.0"]

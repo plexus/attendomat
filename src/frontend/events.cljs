@@ -55,6 +55,29 @@
               (fn [db [_ state]]
                 (update-in db [:show-states] #(set/difference % #{state}))))
 
+(reg-event-db :show-comment-form
+              (fn [db]
+                (assoc db :show-comment-form true)))
+
+(reg-event-db :hide-comment-form
+              (fn [db]
+                (assoc db :show-comment-form false)))
+
+(reg-event-fx :add-comment
+              (fn [db [_ email comment]]
+                {:dispatch [:add-event "COMMENT" email comment]}))
+
 (reg-event-fx :summarize
               (fn [_ _]
                 {:backend {:call [:summarize]}}))
+
+(reg-event-fx :goto-emails
+              (fn [_ [_ email]]
+                {:backend {:call [:fetch-emails-from email]
+                           :dispatch :merge-emails}
+                 :dispatch [:transition-state :emails]}))
+
+(reg-event-db :merge-emails
+              (fn [db [_ emails]]
+                (prn emails)
+                (update db :emails merge emails)))
