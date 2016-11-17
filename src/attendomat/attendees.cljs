@@ -19,11 +19,13 @@
    "I have read the Code of Conduct, and agree to honor it." :agree-coc
    "If we get T-Shirts, what would be your size?" :tshirt-size
    "Is there anything else you would like to mention?" :comment
+   "Is there anything else you would like to mention? " :comment
    "Which language do you prefer?" :language-prefs})
 
 (defn parse-attendee-data [[header & rows]]
   (map (fn [row]
-         (into {:state :waiting}
+         (into {:state :waiting
+                :history []}
                (map-indexed (fn [idx heading]
                               (let [field (nth row idx)
                                     field-name (get fields heading)]
@@ -34,8 +36,11 @@
                                   [field-name field]))) header)))
        rows))
 
+(defn filter-state [state attendees]
+  (filter #(= state (:state %)) attendees))
+
 (defn randomly-select [attendees state count]
   (->> attendees
-       (filter #(= state (:state %)))
+       (filter-state state)
        shuffle
        (take count)))

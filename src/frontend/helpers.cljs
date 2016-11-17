@@ -12,7 +12,3 @@
   [event-name]
   (fn [browser-event]
     (dispatch [event-name (.. browser-event -target -value)])))
-
-
-(defn present? [x]
-  (and x (not (empty? x))))

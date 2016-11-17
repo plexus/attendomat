@@ -1,5 +1,6 @@
 (ns frontend.views
-  (:require [frontend.helpers :refer [on-change-handler on-change-dispatch present?]]
+  (:require [frontend.helpers :refer [on-change-handler on-change-dispatch]]
+            [attendomat.helpers :refer [present?]]
             [frontend.styles :as styles]
             [garden.core :refer [css]]
             [reagent.core :as r]
@@ -23,7 +24,6 @@
                                 (dispatch [:hide-state state]))}]
          caption " (" count ")"]))))
 
-
 (defn filter-checkboxes []
   [:div#filter-checkboxes
    [filter-checkbox :waiting]
@@ -46,16 +46,19 @@
          (let [name-str (str (:first-name a) " " (:last-name a))]
            [:div.entry {:key (:email a)
                         :class (str "state-" (name (:state a)))
-                        :on-click #(dispatch [:select-attendee a])}
+                        :on-click #(dispatch [:select-attendee (:email a)])}
             name-str]))])))
 
 (defn action-buttons []
   [:div#action-buttons.buttons
    [:button {:on-click #(dispatch [:fetch-attendees])} "Refresh"]
-   [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]])
+   [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]
+   [:button {:on-click #(dispatch [:summarize])} "Summarize"]])
 
 (defn attendee-list-panel []
   [:div#attendee-list-panel
+   [:div.top-bar.top-bar--right
+    [:a.button {:on-click #(dispatch [:transition-state :inspector])} "{}"]]
    [filter-checkboxes]
    [filter-box]
    [action-buttons]
@@ -75,27 +78,38 @@
                              (dispatch [:transition-state :attendee-list]))}
         "Invite"]])))
 
+(defn attendee-state-change-buttons [state email]
+  [:div.buttons
+   (if-not (= state :invited)
+     [:button.state-invited
+      {:on-click #(dispatch [:add-event "INVITED" email])}
+      "Invite"])
+   (if-not (= state :accepted)
+     [:button.state-accepted
+      {:on-click #(dispatch [:add-event "ACCEPTED" email])}
+      "Accept"])
+   (if-not (= state :cancelled)
+     [:button.state-cancelled
+      {:on-click #(dispatch [:add-event "CANCELLED" email])}
+      "Cancel"])])
+
+(defn back-button []
+  [:a.back-arrow.button {:on-click #(dispatch [:transition-state :attendee-list])} "←"])
+
 (defn selected-attendee-panel []
   (let [attendee (subscribe [:selected-attendee])]
     (fn []
-      (let [{:keys [first-name
-                    last-name
-                    email
-                    state
-                    age
-                    gender
-                    experience-other
-                    experience-clojure
-                    language-prefs
-                    food-prefs
-                    assistance
-                    childcare
-                    heard-of-us
-                    comment]} @attendee]
+      (let [{:keys [first-name last-name email state age gender
+                    experience-other experience-clojure language-prefs
+                    food-prefs assistance childcare heard-of-us comment
+                    history]} @attendee]
         [:div#selected-attendee
-         [:p [:a {:on-click #(dispatch [:transition-state :attendee-list])} "<--"]]
-         [:p {:class (str "state-" (name state))} first-name " " last-name " (" (name state) ")"]
+         [:div.top-bar
+          [back-button]
+          [:span.label {:class (str "state-" (name state))} (name state)]]
+         [:p [:span.user-name  first-name " " last-name]]
          [:p email]
+         [attendee-state-change-buttons state email]
          [:p age]
          [:p gender]
          (if (present? experience-other)
@@ -106,6 +120,14 @@
            [:div
             [:h3 "Experience in Clojure"]
             [:p experience-clojure]])
+         (if (present? heard-of-us)
+           [:div
+            [:h3 "How did you hear of us"]
+            [:p heard-of-us]])
+         (if (present? comment)
+           [:div
+            [:h3 "Comment"]
+            [:p comment]])
          ;; (if (present? language-prefs)
          ;;   [:div
          ;;    [:h3 "language-prefs"]
@@ -122,24 +144,22 @@
            [:div
             [:h3 "Childcare"]
             [:p childcare]])
-         (if (present? heard-of-us)
-           [:div
-            [:h3 "How did you hear of us"]
-            [:p heard-of-us]])
-         (if (present? comment)
-           [:div
-            [:h3 "Comment"]
-            [:p comment]])
-         [:div.buttons
-          (if-not (= state :invited)
-            [:button.state-invited "Invite"])
-          (if-not (= state :accepted)
-            [:button.state-accepted {
-              :on-click #(dispatch [:add-event "ACCEPTED" email])
-            } "Accept"])
-          (if-not (= state :cancelled)
-            [:button.state-cancelled "Cancel"])
-          ]]))))
+         [:div
+          [:h3 "History"]
+          [:table {:width "100%"}
+           (for [{:keys [timestamp state type]} history]
+             [:tr {:key (.toString timestamp)
+                   :class (str "state-" (name state))}
+              [:td (.toDateString timestamp)]
+              [:td  type]])]]]))))
+
+(defn inspector-panel []
+  (let [attendees (subscribe [:attendees])]
+    (fn []
+      [:div#inspector
+       [:div.top-bar
+        [back-button]]
+       [:textarea {:rows "35" :value (prn-str @attendees)}]])))
 
 (defn main-panel []
   (let [state (subscribe [:state])]
@@ -147,7 +167,8 @@
       [:div
        [:style {:type "text/css"} (css styles/styles)]
        (case @state
-         :attendee-list [attendee-list-panel]
-         :invite-more   [invite-more-panel]
-         :selected-attendee   [selected-attendee-panel]
+         :attendee-list      [attendee-list-panel]
+         :invite-more        [invite-more-panel]
+         :selected-attendee  [selected-attendee-panel]
+         :inspector          [inspector-panel]
          [:div (prn-str @state)])])))

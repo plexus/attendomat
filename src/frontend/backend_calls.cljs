@@ -9,10 +9,8 @@
 (defn server-call [[fname & args] callback]
   (let [return-handler (fn [ret]
                          (callback (t/read-transit ret)))
-        backend-call (-> (withSuccessHandler return-handler)
+        backend-call (-> (if callback (withSuccessHandler return-handler) run)
                          (obj/get "backendCall"))
         fname (str/replace (name fname) "-" "_")]
-
-    (println fname (t/write-transit (if (nil? args) '() args)))
 
     (backend-call fname (t/write-transit (if (nil? args) '() args)))))
