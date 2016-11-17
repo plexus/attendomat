@@ -34,14 +34,19 @@
   (get-in attendees [email :state]))
 
 (defn update-attendee-state [attendees email new-state event]
-  (-> attendees
-      (assoc-in [email :state] new-state)
-      (update-in [email :history] conj (assoc event :state new-state))))
+  (assoc-in attendees [email :state] new-state))
+
+(defn append-history [attendees email event]
+  (update-in attendees [email :history] conj event))
 
 (defn apply-event [attendees {:keys [type args] :as event}]
   (let [email (first args)
         new-state (event->state type)]
-    (update-attendee-state attendees email new-state event)))
+    (if new-state
+      (-> attendees
+          (append-history email (assoc event :state new-state))
+          (update-attendee-state email new-state event))
+      (append-history attendees email event))))
 
 
 (defn attendee-data []

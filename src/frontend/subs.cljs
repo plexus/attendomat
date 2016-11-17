@@ -4,18 +4,27 @@
             [clojure.string :as str]))
 
 (defn str-include? [haystack needle]
-  (.includes (str/lower-case haystack)
-             (str/lower-case needle)))
+  (.includes (str/lower-case (str haystack))
+             (str/lower-case (str needle))))
 
 (reg-sub :state (fn [db] (:state db)))
 (reg-sub :filter-value (fn [db] (:filter-value db)))
 (reg-sub :show-states (fn [db] (:show-states db)))
+(reg-sub :show-comment-form (fn [db] (:show-comment-form db)))
+(reg-sub :emails (fn [db] (:emails db)))
+
 (reg-sub :selected-attendee
          (fn [db]
            (first
             (filter
              #(= (:email %) (:selected-attendee db))
              (:attendees db))) ))
+
+(reg-sub :selected-attendee-emails
+         :<- [:selected-attendee]
+         :<- [:emails]
+         (fn [[attendee emails]]
+           (get emails (:email attendee))))
 
 ;; Filtered using the search box
 (reg-sub

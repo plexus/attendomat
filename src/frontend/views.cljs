@@ -4,7 +4,9 @@
             [frontend.styles :as styles]
             [garden.core :refer [css]]
             [reagent.core :as r]
-            [re-frame.core :as re-frame :refer [dispatch subscribe]]))
+            [re-frame.core :as re-frame :refer [dispatch subscribe]]
+            [clojure.string :as str]
+            [goog.string :as gstring]))
 
 (defn filter-checkbox [state]
   (let [state-filter (subscribe [:state-filter state])]
@@ -50,7 +52,7 @@
             name-str]))])))
 
 (defn action-buttons []
-  [:div#action-buttons.buttons
+  [:div.action-buttons.buttons
    [:button {:on-click #(dispatch [:fetch-attendees])} "Refresh"]
    [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]
    [:button {:on-click #(dispatch [:summarize])} "Summarize"]])
@@ -64,11 +66,17 @@
    [action-buttons]
    [attendee-list]])
 
+(defn back-button
+  ([]
+   (back-button :attendee-list))
+  ([target]
+   [:a.back-arrow.button {:on-click #(dispatch [:transition-state target])} "←"]))
+
 (defn invite-more-panel []
   (let [invite-count (r/atom "")]
     (fn []
       [:div#invite-more-panel
-       [:p [:a {:on-click #(dispatch [:transition-state :attendee-list])} "<--"]]
+       [:div.top-bar [back-button]]
        [:p "How many people do you want to invite?"]
        [:input.text {:type "text"
                      :value @invite-count
@@ -79,7 +87,7 @@
         "Invite"]])))
 
 (defn attendee-state-change-buttons [state email]
-  [:div.buttons
+  [:div.action-buttons.buttons
    (if-not (= state :invited)
      [:button.state-invited
       {:on-click #(dispatch [:add-event "INVITED" email])}
@@ -91,13 +99,23 @@
    (if-not (= state :cancelled)
      [:button.state-cancelled
       {:on-click #(dispatch [:add-event "CANCELLED" email])}
-      "Cancel"])])
+      "Cancel"])
+   [:button
+    {:on-click #(dispatch [:show-comment-form])}
+    "Comment"]])
 
-(defn back-button []
-  [:a.back-arrow.button {:on-click #(dispatch [:transition-state :attendee-list])} "←"])
+
+(defn comment-form [email]
+  (let [comment (r/atom "")]
+    (fn []
+      [:div
+       [:textarea {:on-change (on-change-handler comment)}]
+       [:button {:on-click #(do (dispatch [:add-comment email @comment])
+                                (dispatch [:hide-comment-form]))} "Add comment"]])))
 
 (defn selected-attendee-panel []
-  (let [attendee (subscribe [:selected-attendee])]
+  (let [attendee (subscribe [:selected-attendee])
+        show-comment-form (subscribe [:show-comment-form])]
     (fn []
       (let [{:keys [first-name last-name email state age gender
                     experience-other experience-clojure language-prefs
@@ -106,10 +124,29 @@
         [:div#selected-attendee
          [:div.top-bar
           [back-button]
-          [:span.label {:class (str "state-" (name state))} (name state)]]
-         [:p [:span.user-name  first-name " " last-name]]
+          [:div.button.button--mail {:on-click #(dispatch [:goto-emails email])} "🖂"]]
+         [:p.flex
+          [:div.user-name  first-name " " last-name]
+          [:div.label {:class (str "state-" (name state))} (name state)]]
          [:p email]
-         [attendee-state-change-buttons state email]
+         (if @show-comment-form
+           [comment-form email]
+           [attendee-state-change-buttons state email])
+         [:div
+          [:table {:width "100%"}
+           [:tbody
+            (for [{:keys [timestamp state type args]} history]
+              (let [note (second args)
+                    state (or state :comment)]
+                (list
+                 [:tr {:key (.toString timestamp)
+                       :class (str "state-" (name state))}
+                  [:td (and timestamp (.toDateString timestamp))]
+                  [:td type]]
+                 (if (present? note)
+                   [:tr {:key (str (.toString timestamp) "-note")
+                         :class (str "state-" (name state))}
+                    [:td {:col-span "2"} note]]))))]]]
          [:p age]
          [:p gender]
          (if (present? experience-other)
@@ -143,15 +180,7 @@
          (if (present? childcare)
            [:div
             [:h3 "Childcare"]
-            [:p childcare]])
-         [:div
-          [:h3 "History"]
-          [:table {:width "100%"}
-           (for [{:keys [timestamp state type]} history]
-             [:tr {:key (.toString timestamp)
-                   :class (str "state-" (name state))}
-              [:td (.toDateString timestamp)]
-              [:td  type]])]]]))))
+            [:p childcare]])]))))
 
 (defn inspector-panel []
   (let [attendees (subscribe [:attendees])]
@@ -160,6 +189,30 @@
        [:div.top-bar
         [back-button]]
        [:textarea {:rows "35" :value (prn-str @attendees)}]])))
+
+(def month-names ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"])
+
+
+
+(defn email-entry [{:keys [id subject body date]}]
+  [:div.email-entry
+   [:div.subject-row
+    [:div.subject [:a {:href (str "https://mail.google.com/mail/u/0/#inbox/" id) :target "_blank"} subject]]
+    [:div.date (.getDate date) " " (get month-names (.getMonth date)) " " (.getHours date) ":" (gstring/format "%02f" (.getMinutes date)) ]]
+   [:div.preview (subs body 0 150) "..."]])
+
+(defn emails-panel []
+  (let [attendee (subscribe [:selected-attendee])
+        emails (subscribe [:selected-attendee-emails])]
+    (fn []
+      (let [{:keys [email]} @attendee
+            emails @emails]
+        [:div#inspector
+         [:div.top-bar
+          [back-button :selected-attendee]]
+         [:p "from:" email]
+         (for [message emails]
+           ^{:key (:id message)} [email-entry message])]))))
 
 (defn main-panel []
   (let [state (subscribe [:state])]
@@ -171,4 +224,5 @@
          :invite-more        [invite-more-panel]
          :selected-attendee  [selected-attendee-panel]
          :inspector          [inspector-panel]
+         :emails             [emails-panel]
          [:div (prn-str @state)])])))

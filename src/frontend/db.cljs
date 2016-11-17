@@ -4,4 +4,5 @@
   {:state :attendee-list
    :attendees []
    :filter-value ""
-   :show-states #{:waiting :invited :accepted :cancelled}})
+   :show-states #{:waiting :invited :accepted :cancelled}
+   :emails {}})
