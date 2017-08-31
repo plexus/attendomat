@@ -120,12 +120,12 @@
       (let [{:keys [first-name last-name email state age gender
                     experience-other experience-clojure language-prefs
                     food-prefs assistance childcare heard-of-us comment
-                    history]} @attendee]
+                    history travel]} @attendee]
         [:div#selected-attendee
          [:div.top-bar
           [back-button]
           [:div.button.button--mail {:on-click #(dispatch [:goto-emails email])} "🖂"]]
-         [:p.flex
+         [:div.flex
           [:div.user-name  first-name " " last-name]
           [:div.label {:class (str "state-" (name state))} (name state)]]
          [:p email]
@@ -147,40 +147,45 @@
                    [:tr {:key (str (.toString timestamp) "-note")
                          :class (str "state-" (name state))}
                     [:td {:col-span "2"} note]]))))]]]
-         [:p age]
+         (when (not= age "18 and over | 18 und älter")
+           [:p "⚠" age])
          [:p gender]
          (if (present? experience-other)
            [:div
-            [:h3 "Experience"]
+            [:h3 "🚧 Experience"]
             [:p experience-other]])
          (if (present? experience-clojure)
            [:div
-            [:h3 "Experience in Clojure"]
+            [:h3 "🖳 Experience in Clojure"]
             [:p experience-clojure]])
          (if (present? heard-of-us)
            [:div
-            [:h3 "How did you hear of us"]
+            [:h3 "👂 How did you hear of us"]
             [:p heard-of-us]])
          (if (present? comment)
            [:div
-            [:h3 "Comment"]
+            [:h3 "💭 Comment"]
             [:p comment]])
-         ;; (if (present? language-prefs)
-         ;;   [:div
-         ;;    [:h3 "language-prefs"]
-         ;;    [:p language-prefs]])
+         (if (present? language-prefs)
+           [:div
+            [:h3 "💬 Language preference"]
+            [:p language-prefs]])
          (if (present? food-prefs)
            [:div
-            [:h3 "Food preference"]
+            [:h3 "🍴 Food preference"]
             [:p food-prefs]])
          (if (present? assistance)
            [:div
-            [:h3 "Assistance"]
+            [:h3 "♿ Assistance"]
             [:p assistance]])
          (if (present? childcare)
            [:div
-            [:h3 "Childcare"]
-            [:p childcare]])]))))
+            [:h3 "👶 Childcare"]
+            [:p childcare]])
+         (if (present? travel)
+           [:div
+            [:h3 "🛬 Travel from outside Berlin"]
+            [:p travel]])]))))
 
 (defn inspector-panel []
   (let [attendees (subscribe [:attendees])]
@@ -191,8 +196,6 @@
        [:textarea {:rows "35" :value (prn-str @attendees)}]])))
 
 (def month-names ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"])
-
-
 
 (defn email-entry [{:keys [id subject body date]}]
   [:div.email-entry

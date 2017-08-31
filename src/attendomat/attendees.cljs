@@ -1,11 +1,15 @@
 (ns attendomat.attendees
   (:require [backend.sheets :as sh]))
 
+
 (def fields
   {"Timestamp" :timestamp
+   "First name" :first-name
    "Your first name" :first-name
+   "Last name" :last-name
    "Your last name" :last-name
    "E-mail" :email
+   "Age" :age
    "Your Age" :age
    "With what gender do you identify?" :gender
    "Can we take pictures of you and share them as Creative Commons?" :photo-clearance
@@ -20,7 +24,8 @@
    "If we get T-Shirts, what would be your size?" :tshirt-size
    "Is there anything else you would like to mention?" :comment
    "Is there anything else you would like to mention? " :comment
-   "Which language do you prefer?" :language-prefs})
+   "Which language do you prefer?" :language-prefs
+   "Do you plan to travel to Berlin from outside Berlin/Brandenburg for the workshop?" :travel})
 
 (defn parse-attendee-data [[header & rows]]
   (map (fn [row]
