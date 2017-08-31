@@ -14,6 +14,12 @@
               :separator \tab)]
      (into {} (map vector fields row))))
 
+ (defn read-csv [name fields]
+   (for [row (csv/read-csv
+              (slurp (str dir name))
+              :separator \,)]
+     (into {} (map vector fields row))))
+
  (str dir "w1-not-selected.tsv")
  (str dir "w2-attendees.tsv")
  (str dir "w3-accepted.tsv")
