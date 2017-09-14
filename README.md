@@ -73,9 +73,11 @@ lein figwheel
 ```
 
 To get Figwheel to work correctly inside Google sheets you need to disable some
-browser security checks. The only way I've found that works is to use Google
-Chrome (*not* Chromium), and to invoke it with
-`--allow-running-insecure-content`.
+browser security checks.
+
+### Chrome
+
+Use Google Chrome (*not* Chromium), with the `--allow-running-insecure-content`
 
 (It's also recommended you use Chrome canary or unstable to make sure
 Cljs-Devtools works properly, but that's optional).
@@ -87,6 +89,13 @@ google-chrome-unstable --allow-running-insecure-content
 Now reload the sheet, and assuming you have the right `Code.gs` and
 `sidebar-figwheel.html` set up, the sidebar should pop up with the Attendomat GUI.
 
+### Firefox
+
+With Firefox Nightly (possible other versions as well, this was tested with
+Firefox 57.0 on Linux. Open the site, click on the little "i" left of the
+address bar, click on the right arrow (show connection details), then click on
+"Disable Protection". Reload the page and all should be good.
+
 ## Granting Permission
 
 Normally the names of attendees should show up in the sidebar, but chances are
@@ -95,6 +104,60 @@ they won't, because the code doesn't yet have access to the data.
 Go to the script editor again (Tools > Script Editor), from the "Select a
 Function" dropdown select "onOpen", then press the "Play" button (a right
 pointing triangle). A dialog will pop up where you can grant permission.
+
+## Updating for a new workshop
+
+When you follow these instructions, a new sheet will pop up called "Errors", which will look like this
+
+```
+No field mapping for "First Name"
+No field mapping for "Last Name"
+No field mapping for "Do you plan to travel to Berlin from outside Berlin/Brandenburg for the workshop?"
+```
+
+This is because the form has been updated since the previous workshop, and fields have been renamed or added. The first thing to do is go into `src/attendomat/attendees.cljs`, and add these fields. In case of a rename just add them, don't remove the old ones. It doesn't hurt, and if people change their mind again it continues to work.
+
+``` clojure
+(def fields
+  {"First Name" :first-name
+   "Last Name" :last-name
+   ,,,})
+```
+
+This assures they get read correctly and added to the attendee data under the given key.
+
+Specific fields like food preferences or childcare are also displayed when looking at the attendee details. For this you go to `src/frontend/views.cljs` and update `selected-attendee-panel`. There's a big destructuring form at the top, add the necessary keys there, then add whatever hiccup you want to the view.
+
+
+``` clojure
+(defn selected-attendee-panel []
+  (let [attendee (subscribe [:selected-attendee])]
+    (fn []
+      (let [{:keys [first-name last-name email state age gender
+                    experience-other experience-clojure language-prefs
+                    food-prefs assistance childcare heard-of-us comment
+                    history travel]} @attendee]
+        [:div#selected-attendee
+         ,,,
+         (if (present? travel)
+           [:div [:h3 "Travel"] [:p travel]])
+         ,,,
+         ]))))
+```
+
+To also display this data in the summaries, update `src/backend/summarize.cljs`. You can follow the pattern given there, for instance this:
+
+```
+(sh/update-sheet-data "Feedback"
+                          `[["HOW DID YOU HEAR FROM US"]
+                            ~@(summarize-field :heard-of-us attendees)
+                            []
+                            ["COMMENTS"]
+                            ~@(summarize-field :comment attendees)
+                            []])
+```
+
+Creates a new sheet called "Feedback", which contains a summary of the `:heard-of-us` and `:comment` fields, for all selected attendees.
 
 ## Deploying
 

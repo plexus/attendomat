@@ -14,6 +14,8 @@
 
   :clean-targets ^{:protect false} [:target-path :compile-path "resources/public/js/compiled"]
 
+  :figwheel {}
+
   :cljsbuild {:builds
               {:gui-dev
                {:source-paths ["src"]
