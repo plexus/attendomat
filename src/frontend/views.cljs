@@ -14,17 +14,15 @@
       (let [{:keys [caption checked count]} @state-filter
             state-str (name state)
             id (str "filter-" state)]
-        [:label {:for id
-                 :class (str "state-filter-checkbox state-" state-str)
-                 :key state-str}
-         [:input {:type "checkbox"
-                  :name id
-                  :id id
-                  :checked checked
-                  :on-change #(if (.. % -target -checked)
-                                (dispatch [:show-state state])
-                                (dispatch [:hide-state state]))}]
-         caption " (" count ")"]))))
+        [:div.pv1 {:class (str "state-filter-checkbox state-" state-str)}
+         [:input.mh1 {:type "checkbox"
+                      :name id
+                      :id id
+                      :checked checked
+                      :on-change #(if (.. % -target -checked)
+                                    (dispatch [:show-state state])
+                                    (dispatch [:hide-state state]))}]
+         [:label {:for id :key state-str} caption " (" count ")"]]))))
 
 (defn filter-checkboxes []
   [:div#filter-checkboxes
@@ -37,6 +35,7 @@
   (let [filter-value (subscribe [:filter-value])]
     (fn []
       [:input.text {:type "text"
+                    :placeholder "🔎 Filter"
                     :value @filter-value
                     :on-change (on-change-dispatch :set-filter-value)}])))
 
@@ -51,20 +50,44 @@
                         :on-click #(dispatch [:select-attendee (:email a)])}
             name-str]))])))
 
+(defn menu-bar
+  ([title]
+   [menu-bar title nil])
+  ([title back]
+   (let [menu-open? (subscribe [:menu-open?])
+         active-calls (subscribe [:backend/active-calls])]
+     (fn []
+       [:div#menu-bar.flex.f3.bg-black.near-white.ph1.pv1.mb1 {:style {:line-height "34px"}}
+        (when back
+          [:div.br-100.dark-gray.bg-near-white.pointer.tc {:style {:width "34px" :height "34px"}}
+           [:a {:on-click #(dispatch [:transition-state back])} "←"]])
+        [:div title]
+        [:div.flex
+         (when (not (empty? @active-calls))
+           [:img {:src "https://arnebrasseur.net/hourglass-dark.gif"
+                  :title (str/join "\n" (map :caption (vals @active-calls)))
+                  :height "34px"
+                  :width "34px"}])
+         [:div.pointer
+          [:a {:on-click #(dispatch [:toggle-menu])} (if @menu-open? "︽" "☰")]]]]))))
+
 (defn action-buttons []
   [:div.action-buttons.buttons
-   [:button {:on-click #(dispatch [:fetch-attendees])} "Refresh"]
+   #_[:button {:on-click #(dispatch [:fetch-attendees])} "Refresh"]
    [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]
    [:button {:on-click #(dispatch [:summarize])} "Summarize"]])
 
 (defn attendee-list-panel []
   [:div#attendee-list-panel
-   [:div.top-bar.top-bar--right
-    [:a.button {:on-click #(dispatch [:transition-state :inspector])} "{}"]]
-   [filter-checkboxes]
-   [filter-box]
-   [action-buttons]
-   [attendee-list]])
+   [menu-bar "Attendees"]
+   #_[:div.fr.mv1.pv2.ph1.cb.f5
+      [:a.mr1.button {:title "Show attendee data as EDN" :on-click #(dispatch [:transition-state :inspector])} "{}"]
+      [:a.button {:title "Reload data from spreadsheet" :on-click #(dispatch [:fetch-attendees])} "🔄"]]
+   [:div.cb
+    [filter-box]
+    [filter-checkboxes]
+    #_[action-buttons]
+    [attendee-list]]])
 
 (defn back-button
   ([]
@@ -73,18 +96,21 @@
    [:a.back-arrow.button {:on-click #(dispatch [:transition-state target])} "←"]))
 
 (defn invite-more-panel []
-  (let [invite-count (r/atom "")]
+  (let [invite-count (r/atom "")
+        previous-state (subscribe [:previous-state])]
     (fn []
       [:div#invite-more-panel
-       [:div.top-bar [back-button]]
-       [:p "How many people do you want to invite?"]
-       [:input.text {:type "text"
-                     :value @invite-count
-                     :on-change (on-change-handler invite-count)}]
-       [:button {:on-click (fn [_]
-                             (dispatch [:invite-more (js/parseInt @invite-count)])
-                             (dispatch [:transition-state :attendee-list]))}
-        "Invite"]])))
+       [menu-bar "Invite more" @previous-state]
+       [:div.mh2.tc
+        [:p "How many people do you want to invite?"]
+        [:input.tr.text {:type "text"
+                         :value @invite-count
+                         :placeholder "0"
+                         :on-change (on-change-handler invite-count)}]
+        [:button {:on-click (fn [_]
+                              (dispatch [:invite-more (js/parseInt @invite-count)])
+                              (dispatch [:transition-state :attendee-list]))}
+         "Invite"]]])))
 
 (defn attendee-state-change-buttons [state email]
   [:div.action-buttons.buttons
@@ -99,19 +125,17 @@
    (if-not (= state :cancelled)
      [:button.state-cancelled
       {:on-click #(dispatch [:add-event "CANCELLED" email])}
-      "Cancel"])
-   [:button
-    {:on-click #(dispatch [:show-comment-form])}
-    "Comment"]])
+      "Cancel"])])
 
 
 (defn comment-form [email]
   (let [comment (r/atom "")]
     (fn []
-      [:div
-       [:textarea {:on-change (on-change-handler comment)}]
-       [:button {:on-click #(do (dispatch [:add-comment email @comment])
-                                (dispatch [:hide-comment-form]))} "Add comment"]])))
+      [:div.tc
+       [:div.mh1
+        [:textarea {:on-change (on-change-handler comment)}]]
+       [:button.ma2 {:on-click #(do (dispatch [:add-comment email @comment])
+                                    (dispatch [:hide-comment-form]))} "Add comment"]])))
 
 (defn selected-attendee-panel []
   (let [attendee (subscribe [:selected-attendee])
@@ -122,33 +146,44 @@
                     food-prefs assistance childcare heard-of-us comment
                     history travel]} @attendee]
         [:div#selected-attendee
-         [:div.top-bar
-          [back-button]
-          [:div.button.button--mail {:on-click #(dispatch [:goto-emails email])} "🖂"]]
-         [:div.flex
-          [:div.user-name  first-name " " last-name]
-          [:div.label {:class (str "state-" (name state))} (name state)]]
-         [:p email]
+         [menu-bar "Attendee" :attendee-list]
+         [:div.tc.pv2 {:class (str "state-" (name state))}
+          [:div.f3 str first-name " " last-name]
+          [:div.small-caps (name state)]]
+         [:div.mt2.pb2
+          [attendee-state-change-buttons state email]]
+         (when (not (empty? history))
+           [:div.pa1
+            [:div.f4 "History"]
+            [:table {:width "100%"}
+             [:tbody
+              (for [{:keys [timestamp state type args]} history]
+                (let [note (second args)
+                      state (or state :comment)]
+                  (list
+                   [:tr {:key (.toString timestamp)
+                         :class (str "state-" (name state))}
+                    [:td (and timestamp (.toDateString timestamp))]
+                    [:td type]]
+                   (if (present? note)
+                     [:tr {:key (str (.toString timestamp) "-note")
+                           :class (str "state-" (name state))}
+                      [:td {:col-span "2"} note]]))))]]])
+
          (if @show-comment-form
            [comment-form email]
-           [attendee-state-change-buttons state email])
-         [:div
-          [:table {:width "100%"}
-           [:tbody
-            (for [{:keys [timestamp state type args]} history]
-              (let [note (second args)
-                    state (or state :comment)]
-                (list
-                 [:tr {:key (.toString timestamp)
-                       :class (str "state-" (name state))}
-                  [:td (and timestamp (.toDateString timestamp))]
-                  [:td type]]
-                 (if (present? note)
-                   [:tr {:key (str (.toString timestamp) "-note")
-                         :class (str "state-" (name state))}
-                    [:td {:col-span "2"} note]]))))]]]
+           [:div.ph2.pb2.w-100.tr
+            [:a.blue.bb.b--blue.pointer {:on-click #(dispatch [:show-comment-form])} "Add comment"]])
+
+         [:div.pt2 "🖂 " email]
+         [:div.ph2.pb2.w-100.tr
+          [:a.blue.bb.b--blue.pointer {:on-click #(dispatch [:goto-emails email])} "View emails"]]
+
          (when (not= age "18 and over | 18 und älter")
-           [:p "⚠" age])
+           [:div
+            [:h3 "Age"]
+            [:p "⚠" age]])
+         [:h3 "Gender"]
          [:p gender]
          (if (present? experience-other)
            [:div
@@ -191,8 +226,7 @@
   (let [attendees (subscribe [:attendees])]
     (fn []
       [:div#inspector
-       [:div.top-bar
-        [back-button]]
+       [menu-bar "attendees.edn" :attendee-list]
        [:textarea {:rows "35" :value (prn-str @attendees)}]])))
 
 (def month-names ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"])
@@ -210,22 +244,40 @@
     (fn []
       (let [{:keys [email]} @attendee
             emails @emails]
-        [:div#inspector
-         [:div.top-bar
-          [back-button :selected-attendee]]
-         [:p "from:" email]
+        [:div
+         [menu-bar "Emails" :selected-attendee]
+         [:p.bb.b--black "From: " email]
          (for [message emails]
            ^{:key (:id message)} [email-entry message])]))))
 
+(defn menu-panel []
+  [:div#menu-panel
+   [menu-bar "Menu"]
+   [:ul.list
+    [:li [:a {:on-click #(dispatch [:transition-state :attendee-list])} "Attendee List"]]
+    [:li [:a {:on-click #(dispatch [:transition-state :invite-more])} "Invite More"]]
+    [:li [:a {:on-click #(dispatch [:summarize])} "Generate Result Sheets"]]
+    [:li [:a {:on-click #(dispatch [:fetch-attendees])} "Reload Spreadsheet Data"]]
+    [:li [:a {:on-click #(dispatch [:transition-state :inspector])} "Export attendees.edn"]]]])
+
 (defn main-panel []
-  (let [state (subscribe [:state])]
+  (let [state (subscribe [:state])
+        menu-open? (subscribe [:menu-open?])]
     (fn []
       [:div
        [:style {:type "text/css"} (css styles/styles)]
-       (case @state
-         :attendee-list      [attendee-list-panel]
-         :invite-more        [invite-more-panel]
-         :selected-attendee  [selected-attendee-panel]
-         :inspector          [inspector-panel]
-         :emails             [emails-panel]
-         [:div (prn-str @state)])])))
+       (if @menu-open?
+         [menu-panel]
+         (case @state
+           :attendee-list      [attendee-list-panel]
+           :invite-more        [invite-more-panel]
+           :selected-attendee  [selected-attendee-panel]
+           :inspector          [inspector-panel]
+           :emails             [emails-panel]
+           :working            [:div
+                                [menu-bar "Working..."]
+                                "Working..."]
+           :done               [:div
+                                [menu-bar "Done!"]
+                                "Done!"]
+           [:div "Unkown state:" (prn-str @state)]))])))

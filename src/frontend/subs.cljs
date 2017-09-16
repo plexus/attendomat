@@ -12,6 +12,9 @@
 (reg-sub :show-states (fn [db] (:show-states db)))
 (reg-sub :show-comment-form (fn [db] (:show-comment-form db)))
 (reg-sub :emails (fn [db] (:emails db)))
+(reg-sub :menu-open? (fn [db] (:menu-open? db)))
+(reg-sub :previous-state (fn [db] (:previous-state db)))
+(reg-sub :backend/active-calls (fn [db] (:backend/active-calls db)))
 
 (reg-sub :selected-attendee
          (fn [db]

@@ -14,8 +14,8 @@
                  :margin-bottom "0.5em"}]
 
    [:#attendee-list {:margin-bottom "1em"}
-    [:.entry {:border-bottom "1px solid #eeeeee"
-              :padding "0.1em"}]
+    [:.entry {:border-bottom "1px solid #dddeee"
+              :padding "0.15em"}]
     [:.entry:hover {:text-decoration "underline"
                     :color "#1020aa"}]]
 
@@ -23,20 +23,28 @@
     {:display "flex"
      :flex-wrap "wrap"
      :margin-bottom "0.5em"}
-    [:label {:width "50%"}]
-    [:.state-filter-checkbox {:padding-top "0.1em"
-                              :padding-bottom "0.2em"}]]
+    [:.state-filter-checkbox {:width "50%"}]
+    [:input {:display "block"
+             :float "left"}]]
 
-   [:.action-buttons {:margin-bottom "1em"}]
-   [:.buttons {:display "flex"}]
-   [:button {:border "1px solid #222222"
-             :border-radius "0.5em"
+   [:#menu-panel
+    [:ul {:padding "0"
+          :margin "0"}]
+    [:li {:border-bottom "1px solid #C3DAF4"
+          :color "#4B76A6"
+          :padding "0.75em"
+          :text-align "center"
+          :cursor "pointer"}]]
+
+   [:.buttons {:display "flex"
+               :justify-content "space-around"}]
+   [:button {:border "1px solid #999"
+             :border-radius "999em"
              :background-color "#99bbee"
              :color "#111111"
-             :padding "0.5em"
-             :margin-right "1em"
-             :flex "1 1 0"
-             :cursor "pointer"}]
+             :padding "0.4em 0.8em"
+             :cursor "pointer"
+             }]
    [:button:last-child {:margin-right "0"}]
 
    [:.back-arrow {:font-size "1.5em"}]

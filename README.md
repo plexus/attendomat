@@ -91,10 +91,24 @@ Now reload the sheet, and assuming you have the right `Code.gs` and
 
 ### Firefox
 
-With Firefox Nightly (possible other versions as well, this was tested with
-Firefox 57.0 on Linux. Open the site, click on the little "i" left of the
-address bar, click on the right arrow (show connection details), then click on
-"Disable Protection". Reload the page and all should be good.
+Firefox is a bit more picky when it comes to doing (in)secure things. You can
+disable protection for the current page, and this will make the sidebar load,
+but Figwheel's websocket will fail to connect, and so you're back to square one.
+
+What I have found to work is using `ngrok`. This tool will tunnel all traffic
+from a public host like `2dc5485f.ngrok.io` to a port on your computer, and it
+accepts both `http` and `https` traffic. This way you can make sure the frontend
+and Figwheel's websocket are all loaded over HTTPS, making the browser happy.
+This does involve a few steps.
+
+1. install [ngrok](http://ngrok.io/)
+2. in a seperate terminal run `ngrok http 3449`
+3. make note of the domain name you've been assigned (e.g. `your-domain.ngrok.io`)
+4. In `sidebar-figwheel.html` (in the Google App Script editor), change the Figwheel URL from `http://localhost:3449/js/gui-dev.js` to `https://your-domain.ngrok.io/js/gui-dev.js`
+5. in `project.clj`, change the `:asset-path` to `https://your-domain.ngrok.io/js/gui-dev`
+6. in `project.clj`, set `:websocket-url` to `wss://your-domain.ngrok.io/figwheel-ws`
+
+Now (re)start figwheel, reload the page, and you should see the terminal running Figwheel drop into a ClojureScript REPL. That's when you know all is good.
 
 ## Granting Permission
 

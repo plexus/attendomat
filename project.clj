@@ -19,10 +19,11 @@
   :cljsbuild {:builds
               {:gui-dev
                {:source-paths ["src"]
-                :figwheel {:on-jsload "frontend.core/mount-root"}
+                :figwheel {:on-jsload "frontend.core/mount-root"
+                           :websocket-url "wss://2dc5485f.ngrok.io/figwheel-ws"}
                 :compiler {:main frontend.core
                            :optimizations :none
-                           :asset-path "http://localhost:3449/js/gui-dev"
+                           :asset-path "https://2dc5485f.ngrok.io/js/gui-dev"
                            :output-to "resources/public/js/gui-dev.js"
                            :output-dir "resources/public/js/gui-dev"
                            :preloads [devtools.preload]

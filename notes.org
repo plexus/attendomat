@@ -10,3 +10,7 @@
     document.querySelector('div[aria-label="Code.gs"]').click()
     document.querySelector('.CodeMirror').CodeMirror.setValue('foo')
   #+END_SRC
+* Name generator
+
+http://www2.census.gov/topics/genealogy/1990surnames/dist.all.last
+http://www2.census.gov/topics/genealogy/1990surnames/dist.female.first
