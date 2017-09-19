@@ -8,6 +8,9 @@
              (str/lower-case (str needle))))
 
 (reg-sub :state (fn [db] (:state db)))
+(reg-sub :inspector-state (fn [db] (:inspector-state db)))
+(reg-sub :attendees (fn [db] (:attendees db)))
+(reg-sub :coaches (fn [db] (:coaches db)))
 (reg-sub :filter-value (fn [db] (:filter-value db)))
 (reg-sub :show-states (fn [db] (:show-states db)))
 (reg-sub :show-comment-form (fn [db] (:show-comment-form db)))
@@ -42,7 +45,7 @@
 
 ;; Attendees shown in the attendee list
 (reg-sub
- :attendees
+ :visible-attendees
  :<- [:filtered-attendees]
  :<- [:show-states]
  (fn [[attendees show-states] ats]

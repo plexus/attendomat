@@ -27,35 +27,35 @@
               (fn [db [_ uuid]]
                 (update db :backend/active-calls dissoc uuid)))
 
-(reg-event-fx :fetch-attendees
+(reg-event-fx :fetch-app-data
               (fn [{:keys [db]} _]
                 (backend-call {:db (assoc db :menu-open? false)}
-                              {:call [:attendee-data]
-                               :caption "Reloading attendee data from spreadsheet"
-                               :dispatch :reset-attendees})))
+                              {:call [:app-data]
+                               :caption "Reloading data from spreadsheet"
+                               :dispatch :merge-app-data})))
 
 (reg-event-fx :add-event
               (fn [{:keys [db]} [_ type & args]]
                 (backend-call {:db db}
                               {:call [:add-event type args]
                                :caption (str "Adding event " type " " args)
-                               :dispatch :reset-attendees})))
+                               :dispatch :merge-app-data})))
 
 (reg-event-fx :invite-more
               (fn [{:keys [db]} [_ count]]
                 (let [selection (attendees/randomly-select (:attendees db) :waiting count)]
                   (backend-call {:db db} {:call [:create-invite-batch selection]
                                           :caption (str "Inviting batch of " count)
-                                          :dispatch :reset-attendees}))))
+                                          :dispatch :merge-app-data}))))
 
 (reg-event-fx :select-attendee
               (fn [{:keys [db]} [_ at]]
                 {:db (assoc db :selected-attendee at)
                  :dispatch [:transition-state :selected-attendee]}))
 
-(reg-event-db :reset-attendees
-              (fn [db [_ atts]]
-                (assoc db :attendees atts)))
+(reg-event-db :merge-app-data
+              (fn [db [_ data]]
+                (merge db data)))
 
 (reg-event-db :transition-state
               (fn [db [_ new-state]]
@@ -63,6 +63,10 @@
                        :previous-state (:state db)
                        :state new-state
                        :menu-open? false)))
+
+(reg-event-db :transition-inspector-state
+              (fn [db [_ new-state]]
+                (assoc db :inspector-state new-state)))
 
 (reg-event-db :set-filter-value
               (fn [db [_ new-value]]

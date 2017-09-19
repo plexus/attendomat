@@ -11,9 +11,16 @@
 (defn active-sheet []
   (.getActiveSheet sheet-app))
 
+;; @return Spreadsheet
+(defn open-by-url [url]
+  (.openByUrl sheet-app url))
+
 ;; @return Sheet
-(defn find-sheet [name]
-  (.getSheetByName (active-spreadsheet) name))
+(defn find-sheet
+  ([spreadsheet name]
+   (.getSheetByName spreadsheet name))
+  ([name]
+   (find-sheet (active-spreadsheet) name)))
 
 (defn find-or-create-sheet [name]
   (if-let [sh (find-sheet name)]

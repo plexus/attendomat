@@ -20,10 +20,10 @@
               {:gui-dev
                {:source-paths ["src"]
                 :figwheel {:on-jsload "frontend.core/mount-root"
-                           :websocket-url "wss://2dc5485f.ngrok.io/figwheel-ws"}
+                           :websocket-url "wss://5a301fd7.ngrok.io/figwheel-ws"}
                 :compiler {:main frontend.core
                            :optimizations :none
-                           :asset-path "https://2dc5485f.ngrok.io/js/gui-dev"
+                           :asset-path "https://5a301fd7.ngrok.io/js/gui-dev"
                            :output-to "resources/public/js/gui-dev.js"
                            :output-dir "resources/public/js/gui-dev"
                            :preloads [devtools.preload]
@@ -51,9 +51,9 @@
   :profiles
   {:dev
    {:dependencies [[figwheel-sidecar "0.5.7"]
-                   [com.cemerick/piggieback "0.2.1"]
+                   [com.cemerick/piggieback "0.2.2"]
                    ;;[binaryage/dirac "RELEASE"]
-                   [binaryage/devtools "0.8.2"]]
+                   [binaryage/devtools "0.9.4"]]
 
     ;; :repl-options {:init (do
     ;;                        (require 'dirac.agent)

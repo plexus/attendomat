@@ -19,6 +19,6 @@
 (defn ^:export init []
   (js/console.log "Init called")
   (re-frame/dispatch-sync [:initialize-db])
-  (re-frame/dispatch [:fetch-attendees])
+  (re-frame/dispatch [:fetch-app-data])
   (dev-setup)
   (mount-root))

@@ -1,6 +1,7 @@
 (ns backend.event-sourcing
   (:require [backend.sheets :as sh]
-            [attendomat.attendees :refer [parse-attendee-data]]))
+            [attendomat.attendees :as attendees]
+            [backend.coaches :as coaches]))
 
 (def event->state {"WAITING" :waiting
                    "INVITED" :invited
@@ -10,7 +11,7 @@
 (defn attendee-data-raw []
   (-> (sh/find-sheet "Form Responses 1")
       sh/data-range
-      parse-attendee-data))
+      attendees/parse-attendee-data))
 
 (defn attendees-by-email [ats]
   (into {} (map (juxt :email identity) ats)))
@@ -39,7 +40,7 @@
 (defn append-history [attendees email event]
   (update-in attendees [email :history] conj event))
 
-(defn apply-event [attendees {:keys [type args] :as event}]
+(defn apply-attendee-event [attendees {:keys [type args] :as event}]
   (let [email (first args)
         new-state (event->state type)]
     (if new-state
@@ -48,13 +49,22 @@
           (update-attendee-state email new-state event))
       (append-history attendees email event))))
 
+(defn apply-event [data {:keys [type args] :as event}]
+  (cond
+    (#{"COMMENT" "WAITING" "INVITED" "ACCEPTED" "CANCELLED"} type)
+    (update data :attendees apply-attendee-event event)
 
-(defn attendee-data []
+    (= "SET_COACHES_SPREADSHEET" type)
+    (assoc data :coaches (coaches/read-spreadsheet-data (first args)))
+
+    :else
+    data))
+
+(defn app-data []
   (let [events (event-data)
-        attendees (attendees-by-email (attendee-data-raw))]
-    (vals
-     (reduce (fn [ats ev]
-               (apply-event ats ev)) attendees events))))
+        attendees (attendees-by-email (attendee-data-raw))
+        data {:attendees attendees}]
+    (update (reduce apply-event data events) :attendees vals)))
 
 
 ;; (let [attendees (attendees-by-email [{:email "x@y.be"

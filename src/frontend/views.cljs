@@ -40,7 +40,7 @@
                     :on-change (on-change-dispatch :set-filter-value)}])))
 
 (defn attendee-list []
-  (let [atts (subscribe [:attendees])]
+  (let [atts (subscribe [:visible-attendees])]
     (fn []
       [:div#attendee-list
        (for [a @atts]
@@ -73,16 +73,21 @@
 
 (defn action-buttons []
   [:div.action-buttons.buttons
-   #_[:button {:on-click #(dispatch [:fetch-attendees])} "Refresh"]
    [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]
    [:button {:on-click #(dispatch [:summarize])} "Summarize"]])
+
+(defn coaches-list-panel []
+  (let [coaches (subscribe [:coaches])]
+    [:div#coaches-list-panel
+     [menu-bar "Coaches"]
+     [:div.cb
+      (for [c @coaches]
+        (let [name-str (str (:first-name c) " " (:last-name c))]
+          [:div.entry {:key (:email c)} name-str]))]]))
 
 (defn attendee-list-panel []
   [:div#attendee-list-panel
    [menu-bar "Attendees"]
-   #_[:div.fr.mv1.pv2.ph1.cb.f5
-      [:a.mr1.button {:title "Show attendee data as EDN" :on-click #(dispatch [:transition-state :inspector])} "{}"]
-      [:a.button {:title "Reload data from spreadsheet" :on-click #(dispatch [:fetch-attendees])} "🔄"]]
    [:div.cb
     [filter-box]
     [filter-checkboxes]
@@ -222,12 +227,25 @@
             [:h3 "🛬 Travel from outside Berlin"]
             [:p travel]])]))))
 
+
 (defn inspector-panel []
-  (let [attendees (subscribe [:attendees])]
+  (let [attendees (subscribe [:attendees])
+        coaches (subscribe [:coaches])
+        inspector-state (subscribe [:inspector-state])]
     (fn []
       [:div#inspector
-       [menu-bar "attendees.edn" :attendee-list]
-       [:textarea {:rows "35" :value (prn-str @attendees)}]])))
+       [menu-bar "Export EDN" :attendee-list]
+       [:ul.list.ph1.ma0
+        [:li.pb2 [:a.blue.bb.b--blue.pointer {:on-click #(dispatch [:transition-inspector-state :attendees])} "Attendees"]]
+        [:li [:a.blue.bb.b--blue.pointer {:on-click #(dispatch [:transition-inspector-state :coaches])} "Coaches"]]]
+       [:h3.ph1 (case @inspector-state
+                  :attendees "attendees.edn"
+                  :coaches "coaches.edn"
+                  nil "")]
+       [:textarea {:rows "35" :value (case @inspector-state
+                                       :attendees (prn-str @attendees)
+                                       :coaches (prn-str @coaches)
+                                       nil "")}]])))
 
 (def month-names ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"])
 
@@ -250,15 +268,17 @@
          (for [message emails]
            ^{:key (:id message)} [email-entry message])]))))
 
+
 (defn menu-panel []
   [:div#menu-panel
    [menu-bar "Menu"]
    [:ul.list
     [:li [:a {:on-click #(dispatch [:transition-state :attendee-list])} "Attendee List"]]
+    [:li [:a {:on-click #(dispatch [:transition-state :coaches-list])} "Coaches List"]]
     [:li [:a {:on-click #(dispatch [:transition-state :invite-more])} "Invite More"]]
     [:li [:a {:on-click #(dispatch [:summarize])} "Generate Result Sheets"]]
-    [:li [:a {:on-click #(dispatch [:fetch-attendees])} "Reload Spreadsheet Data"]]
-    [:li [:a {:on-click #(dispatch [:transition-state :inspector])} "Export attendees.edn"]]]])
+    [:li [:a {:on-click #(dispatch [:fetch-app-data])} "Reload Spreadsheet Data"]]
+    [:li [:a {:on-click #(dispatch [:transition-state :inspector])} "Export EDN"]]]])
 
 (defn main-panel []
   (let [state (subscribe [:state])
@@ -270,6 +290,7 @@
          [menu-panel]
          (case @state
            :attendee-list      [attendee-list-panel]
+           :coaches-list       [coaches-list-panel]
            :invite-more        [invite-more-panel]
            :selected-attendee  [selected-attendee-panel]
            :inspector          [inspector-panel]
