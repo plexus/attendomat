@@ -61,7 +61,7 @@
         (when back
           [:div.br-100.dark-gray.bg-near-white.pointer.tc {:style {:width "34px" :height "34px"}}
            [:a {:on-click #(dispatch [:transition-state back])} "←"]])
-        [:div title]
+        [:div {:on-click #(dispatch [:toggle-menu])} title]
         [:div.flex
          (when (not (empty? @active-calls))
            [:img {:src "https://arnebrasseur.net/hourglass-dark.gif"
@@ -71,19 +71,32 @@
          [:div.pointer
           [:a {:on-click #(dispatch [:toggle-menu])} (if @menu-open? "︽" "☰")]]]]))))
 
-(defn action-buttons []
-  [:div.action-buttons.buttons
-   [:button {:on-click #(dispatch [:transition-state :invite-more])} "Invite"]
-   [:button {:on-click #(dispatch [:summarize])} "Summarize"]])
-
 (defn coaches-list-panel []
-  (let [coaches (subscribe [:coaches])]
-    [:div#coaches-list-panel
-     [menu-bar "Coaches"]
-     [:div.cb
-      (for [c @coaches]
-        (let [name-str (str (:first-name c) " " (:last-name c))]
-          [:div.entry {:key (:email c)} name-str]))]]))
+  (let [coaches-spreadsheet (subscribe [:coaches-spreadsheet])
+        coaches (subscribe [:coaches])
+        url-input (r/atom "")]
+    (fn []
+      [:div#coaches-list
+       [menu-bar "Coaches"]
+       (if (nil? @coaches-spreadsheet)
+         [:div.mh2
+          [:p "The coaches response sheet isn't configured yet."]
+          [:p "Copy in the URL to the Google Sheet containing the Coaches Sign Up Responses."]
+          [:input.text {:type "text"
+                        :value @url-input
+                        :placeholder "URL to sheet"
+                        :on-change (on-change-handler url-input)}]
+          [:button {:on-click #(dispatch [:add-event "SET_COACHES_SPREADSHEET" @url-input])} "Update"]]
+         [:div.cb
+          (let [coaches @coaches]
+            (if (empty? coaches)
+              [:p "No coaches have signed up yet."]
+              (for [c coaches]
+                (let [name-str (str (:first-name c) " " (:last-name c))]
+                  [:div.entry {:key (:email c)
+                               :class (str "state-" (name (:state c)))
+                               :on-click #(dispatch [:select-coach (:email c)])}
+                   name-str]))))])])))
 
 (defn attendee-list-panel []
   [:div#attendee-list-panel
@@ -91,7 +104,6 @@
    [:div.cb
     [filter-box]
     [filter-checkboxes]
-    #_[action-buttons]
     [attendee-list]]])
 
 (defn back-button
@@ -119,19 +131,29 @@
 
 (defn attendee-state-change-buttons [state email]
   [:div.action-buttons.buttons
-   (if-not (= state :invited)
+   (when (= state :waiting)
      [:button.state-invited
       {:on-click #(dispatch [:add-event "INVITED" email])}
       "Invite"])
-   (if-not (= state :accepted)
+   (when (contains? #{:waiting :invited :cancelled} state)
      [:button.state-accepted
       {:on-click #(dispatch [:add-event "ACCEPTED" email])}
       "Accept"])
-   (if-not (= state :cancelled)
+   (when (contains? #{:waiting :invited :accepted} state)
      [:button.state-cancelled
       {:on-click #(dispatch [:add-event "CANCELLED" email])}
       "Cancel"])])
 
+(defn coach-state-change-buttons [state email]
+  [:div.action-buttons.buttons
+   (when (contains? #{:waiting :cancelled} state)
+     [:button.state-accepted
+      {:on-click #(dispatch [:add-event "ACCEPTED_COACH" email])}
+      "Accept"])
+   (when (contains? #{:waiting :accepted} state)
+     [:button.state-cancelled
+      {:on-click #(dispatch [:add-event "REJECTED_COACH" email])}
+      "Reject"])])
 
 (defn comment-form [email]
   (let [comment (r/atom "")]
@@ -227,6 +249,70 @@
             [:h3 "🛬 Travel from outside Berlin"]
             [:p travel]])]))))
 
+(defn selected-coach-panel []
+  (let [coach (subscribe [:selected-coach])]
+    (fn []
+      (let [{:keys [first-name last-name email food-prefs phone experience-coaching
+                    history state travel childcare coaching-prefs assistance
+                    gender tshirt-size timestamp floating-coach? other-langs
+                    experience-clojure language-prefs comment]} @coach]
+        [:div#selected-coach
+         [menu-bar "Coach" :coaches-list]
+         [:div.tc.pv2 {:class (str "state-" (name state))}
+          [:div.f3 str first-name " " last-name]
+          [:div.small-caps (name state)]]
+
+         [:div.mt2.pb2
+          [coach-state-change-buttons state email]]
+
+         [:div.pt2 "🖁 " phone]
+         [:div.pt2 "🖂 " email]
+         [:div.ph2.pb2.w-100.tr
+          [:a.blue.bb.b--blue.pointer {:on-click #(dispatch [:goto-emails email])} "View emails"]]
+
+         [:h3 "Gender"]
+         [:p gender]
+         (if (present? experience-coaching)
+           [:div
+            [:h3 "🚧 Experience Coaching"]
+            [:p experience-coaching]])
+         (if (present? experience-clojure)
+           [:div
+            [:h3 "Experience in Clojure"]
+            [:p experience-clojure]])
+         (if (present? language-prefs)
+           [:div
+            [:h3 "💬 Language preference"]
+            [:p language-prefs]])
+         (if (present? coaching-prefs)
+           [:div
+            [:h3 "Coaching preference"]
+            [:p coaching-prefs]])
+         (if (present? floating-coach?)
+           [:div
+            [:h3 "Ok with floating coach?"]
+            [:p floating-coach?]])
+         (if (present? food-prefs)
+           [:div
+            [:h3 "🍴 Food preference"]
+            [:p food-prefs]])
+         (if (present? comment)
+           [:div
+            [:h3 "💭 Comment"]
+            [:p comment]])
+         (if (present? assistance)
+           [:div
+            [:h3 "♿ Assistance"]
+            [:p assistance]])
+         (if (present? childcare)
+           [:div
+            [:h3 "👶 Childcare"]
+            [:p childcare]])
+         (if (present? travel)
+           [:div
+            [:h3 "🛬 Travel from outside Berlin"]
+            [:p travel]])]))))
+
 
 (defn inspector-panel []
   (let [attendees (subscribe [:attendees])
@@ -293,6 +379,7 @@
            :coaches-list       [coaches-list-panel]
            :invite-more        [invite-more-panel]
            :selected-attendee  [selected-attendee-panel]
+           :selected-coach     [selected-coach-panel]
            :inspector          [inspector-panel]
            :emails             [emails-panel]
            :working            [:div

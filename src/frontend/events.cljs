@@ -53,6 +53,11 @@
                 {:db (assoc db :selected-attendee at)
                  :dispatch [:transition-state :selected-attendee]}))
 
+(reg-event-fx :select-coach
+              (fn [{:keys [db]} [_ at]]
+                {:db (assoc db :selected-coach at)
+                 :dispatch [:transition-state :selected-coach]}))
+
 (reg-event-db :merge-app-data
               (fn [db [_ data]]
                 (merge db data)))

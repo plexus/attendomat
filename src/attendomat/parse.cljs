@@ -26,6 +26,7 @@
    "Do you need support with child care during the event? (financial or at-the-event care)" :childcare
    "Have you tried any programming before? If yes, what sort of things? " :experience-other
    "Have you tried programming with Clojure before? " :experience-clojure
+   "How much Clojure experience do you have?" :experience-clojure
    "How did you hear about ClojureBridge Berlin? " :heard-of-us
    "I have read the Code of Conduct, and agree to honor it." :agree-coc
    "I have read and agree with the Berlin Code of Conduct " :agree-coc
@@ -34,12 +35,11 @@
    "Is there anything else you would like to mention? " :comment
    "Anything else you like to mention?" :comment
    "Which language do you prefer?" :language-prefs
+   "Which languages can you coach in?" :language-prefs
    "Do you plan to travel to Berlin from outside Berlin/Brandenburg for the workshop?" :travel
 
    ;; COACHES
-   "Which languages can you coach in?" :language-prefs
-   "How much Clojure experience do you have?" :experience-clojure
-   "Who would you prefer to coach for?" :coaching-preference
+   "Who would you prefer to coach for?" :coaching-prefs
    "Would you be okay with being a floating coach?" :floating-coach?
    "What is your background? Which languages do you know well besides Clojure?" :other-langs
    "Did you coach before? And if so, where?" :experience-coaching

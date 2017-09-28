@@ -6,14 +6,16 @@
 (def event->state {"WAITING" :waiting
                    "INVITED" :invited
                    "ACCEPTED" :accepted
-                   "CANCELLED" :cancelled})
+                   "ACCEPTED_COACH" :accepted
+                   "CANCELLED" :cancelled
+                   "REJECTED_COACH" :rejected})
 
 (defn attendee-data-raw []
   (-> (sh/find-sheet "Form Responses 1")
       sh/data-range
       attendees/parse-attendee-data))
 
-(defn attendees-by-email [ats]
+(defn map-by-email [ats]
   (into {} (map (juxt :email identity) ats)))
 
 (defn event-sheet []
@@ -34,37 +36,47 @@
 (defn attendee-state [attendees email]
   (get-in attendees [email :state]))
 
-(defn update-attendee-state [attendees email new-state event]
-  (assoc-in attendees [email :state] new-state))
+(defn update-state [email->person email new-state event]
+  (assoc-in email->person [email :state] new-state))
 
 (defn append-history [attendees email event]
   (update-in attendees [email :history] conj event))
 
-(defn apply-attendee-event [attendees {:keys [type args] :as event}]
+(defn apply-person-event [attendees {:keys [type args] :as event}]
   (let [email (first args)
         new-state (event->state type)]
     (if new-state
       (-> attendees
           (append-history email (assoc event :state new-state))
-          (update-attendee-state email new-state event))
+          (update-state email new-state event))
       (append-history attendees email event))))
 
 (defn apply-event [data {:keys [type args] :as event}]
   (cond
-    (#{"COMMENT" "WAITING" "INVITED" "ACCEPTED" "CANCELLED"} type)
-    (update data :attendees apply-attendee-event event)
+    (contains? #{"COMMENT" "WAITING" "INVITED" "ACCEPTED" "CANCELLED"} type)
+    (update data :attendees apply-person-event event)
+
+    (contains? #{"ACCEPTED_COACH" "REJECTED_COACH"} type)
+    (update data :coaches apply-person-event event)
 
     (= "SET_COACHES_SPREADSHEET" type)
-    (assoc data :coaches (coaches/read-spreadsheet-data (first args)))
+    (let [[url] args]
+      (assoc data
+             :coaches-spreadsheet url
+             :coaches (map-by-email (coaches/read-spreadsheet-data url))))
 
     :else
     data))
 
 (defn app-data []
   (let [events (event-data)
-        attendees (attendees-by-email (attendee-data-raw))
-        data {:attendees attendees}]
-    (update (reduce apply-event data events) :attendees vals)))
+        attendees (map-by-email (attendee-data-raw))
+        data {:attendees attendees
+              :coaches {}
+              :coaches-spreadsheet nil}]
+    (-> (reduce apply-event data events)
+        (update :attendees vals)
+        (update :coaches vals))))
 
 
 ;; (let [attendees (attendees-by-email [{:email "x@y.be"

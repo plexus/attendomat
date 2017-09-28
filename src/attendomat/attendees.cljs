@@ -5,9 +5,9 @@
 (def blank-attendee {:state :waiting :history []})
 
 (defn parse-attendee-data [[header & rows]]
-  (map (fn [row]
-         (merge blank-attendee (parse/row->map header row)))
-       rows))
+  (->> rows
+       (map #(parse/row->map header %))
+       (map #(merge blank-attendee %))))
 
 (defn filter-state [state attendees]
   (filter #(= state (:state %)) attendees))

@@ -6,6 +6,10 @@
    :previous-state nil
    :menu-open? false
    :attendees []
+   :coaches []
+   :coaches-spreadsheet nil
    :filter-value ""
    :show-states #{:waiting :invited :accepted :cancelled}
-   :emails {}})
+   :emails {}
+   :selected-attendee nil
+   :selected-coach nil})

@@ -5,7 +5,8 @@
    :invited "#A3CAF4"
    :comment "#C3DAF4"
    :accepted "#44C298"
-   :cancelled "#FFAFC1"})
+   :cancelled "#FFAFC1"
+   :rejected "#FFAFC1"})
 
 (def styles
   [
@@ -13,11 +14,13 @@
    [:input.text {:width "100%"
                  :margin-bottom "0.5em"}]
 
-   [:#attendee-list {:margin-bottom "1em"}
-    [:.entry {:border-bottom "1px solid #dddeee"
-              :padding "0.15em"}]
-    [:.entry:hover {:text-decoration "underline"
-                    :color "#1020aa"}]]
+   (let [entry [:.entry {:border-bottom "1px solid #dddeee"
+                         :padding "0.15em"}]
+         entry-hover [:.entry:hover {:text-decoration "underline"
+                                     :color "#1020aa"}]]
+
+     [[:#attendee-list {:margin-bottom "1em"} entry entry-hover]
+      [:#coaches-list {:margin-bottom "1em"} entry entry-hover]])
 
    [:#filter-checkboxes
     {:display "flex"

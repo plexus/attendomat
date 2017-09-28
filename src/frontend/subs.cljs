@@ -11,6 +11,7 @@
 (reg-sub :inspector-state (fn [db] (:inspector-state db)))
 (reg-sub :attendees (fn [db] (:attendees db)))
 (reg-sub :coaches (fn [db] (:coaches db)))
+(reg-sub :coaches-spreadsheet (fn [db] (:coaches-spreadsheet db)))
 (reg-sub :filter-value (fn [db] (:filter-value db)))
 (reg-sub :show-states (fn [db] (:show-states db)))
 (reg-sub :show-comment-form (fn [db] (:show-comment-form db)))
@@ -25,6 +26,13 @@
             (filter
              #(= (:email %) (:selected-attendee db))
              (:attendees db))) ))
+
+(reg-sub :selected-coach
+         (fn [db]
+           (first
+            (filter
+             #(= (:email %) (:selected-coach db))
+             (:coaches db))) ))
 
 (reg-sub :selected-attendee-emails
          :<- [:selected-attendee]
