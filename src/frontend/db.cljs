@@ -5,10 +5,12 @@
    :inspector-state nil
    :previous-state nil
    :menu-open? false
-   :attendees []
-   :coaches []
+   :attendees {}
+   :coaches {}
+   :groups {}
    :coaches-spreadsheet nil
    :filter-value ""
+   :filter-coach ""
    :show-states #{:waiting :invited :accepted :cancelled}
    :emails {}
    :selected-attendee nil

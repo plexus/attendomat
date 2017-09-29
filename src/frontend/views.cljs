@@ -31,23 +31,24 @@
    [filter-checkbox :accepted]
    [filter-checkbox :cancelled]])
 
-(defn filter-box []
-  (let [filter-value (subscribe [:filter-value])]
+(defn filter-box [coach?]
+  (let [filter-value (subscribe [(if coach? :filter-coach :filter-value)])]
     (fn []
       [:input.text {:type "text"
                     :placeholder "🔎 Filter"
                     :value @filter-value
-                    :on-change (on-change-dispatch :set-filter-value)}])))
+                    :on-change (on-change-dispatch (if coach? :set-filter-coach :set-filter-value))}])))
 
 (defn attendee-list []
   (let [atts (subscribe [:visible-attendees])]
     (fn []
       [:div#attendee-list
-       (for [a @atts]
-         (let [name-str (str (:first-name a) " " (:last-name a))]
-           [:div.entry {:key (:email a)
-                        :class (str "state-" (name (:state a)))
-                        :on-click #(dispatch [:select-attendee (:email a)])}
+       (for [{:keys [first-name last-name email state]} @atts]
+         (let [name-str (str first-name " " last-name)]
+           ^{:key email}
+           [:div.entry {:key email
+                        :class (str "state-" (name state))
+                        :on-click #(dispatch [:select-attendee email])}
             name-str]))])))
 
 (defn menu-bar
@@ -73,7 +74,7 @@
 
 (defn coaches-list-panel []
   (let [coaches-spreadsheet (subscribe [:coaches-spreadsheet])
-        coaches (subscribe [:coaches])
+        coaches (subscribe [:filtered-coaches])
         url-input (r/atom "")]
     (fn []
       [:div#coaches-list
@@ -88,9 +89,10 @@
                         :on-change (on-change-handler url-input)}]
           [:button {:on-click #(dispatch [:add-event "SET_COACHES_SPREADSHEET" @url-input])} "Update"]]
          [:div.cb
+          [filter-box true]
           (let [coaches @coaches]
             (if (empty? coaches)
-              [:p "No coaches have signed up yet."]
+              [:p.tc.w-100 "No coaches found."]
               (for [c coaches]
                 (let [name-str (str (:first-name c) " " (:last-name c))]
                   [:div.entry {:key (:email c)
@@ -166,14 +168,15 @@
 
 (defn selected-attendee-panel []
   (let [attendee (subscribe [:selected-attendee])
-        show-comment-form (subscribe [:show-comment-form])]
+        show-comment-form (subscribe [:show-comment-form])
+        previous-state (subscribe [:previous-state])]
     (fn []
       (let [{:keys [first-name last-name email state age gender
                     experience-other experience-clojure language-prefs
                     food-prefs assistance childcare heard-of-us comment
                     history travel]} @attendee]
         [:div#selected-attendee
-         [menu-bar "Attendee" :attendee-list]
+         [menu-bar "Attendee" @previous-state]
          [:div.tc.pv2 {:class (str "state-" (name state))}
           [:div.f3 str first-name " " last-name]
           [:div.small-caps (name state)]]
@@ -355,37 +358,136 @@
            ^{:key (:id message)} [email-entry message])]))))
 
 
+(defn groups-group-row [{:keys [on-click title email language-prefs on-move seedling? ruby? python? js? clojure?]} & content]
+  [:tr {:style {:border-bottom "1px solid #ccc"}}
+   [:td.pl1.w-100
+    [:a.pointer.underline-hover.hover-dark-blue {:on-click on-click :title title}
+     content]]
+   [:td.tc {:style {:min-width "3em"}}
+    (when seedling? [:span {:title "Beginner"} "🌱"])
+    (when clojure? [:span.clojure-logo {:title "Clojure experience"} " "])
+    (when ruby? [:span {:title "Ruby"} "💎"])
+    (when python? [:span {:title "Python"} "🐍"])
+    (when js? [:span {:title "JavaScript"} "📜"])]
+   [:td.grow.shadow-hover [:a.pointer {:on-click #(dispatch [:show-group-overlay-menu
+                                                             email
+                                                             on-move
+                                                             (.-pageX (.-nativeEvent %))
+                                                             (.-pageY (.-nativeEvent %))])} "🠁🠃"]]
+   [:td [:div.flag-small (when (re-find #"German|Deutsch|Both" language-prefs) [:div.flag.flag-de])]]
+   [:td.pr1 [:div.flag-small (when (re-find #"English|Both" language-prefs) [:div.flag.flag-uk])]]])
+
+(defn beginner? [{:keys [experience-clojure experience-other] :or {experience-other ""}}]
+  (and (re-find #"No" experience-clojure)
+       (re-find #"(?i)^\s*$|^no|^nein" experience-other)))
+
+(defn groups-group [{:keys [id name attendees coaches]}]
+  [:div.group.pb2
+   [:h3.mt3.mb1.gray.bb.ph1 {:style {:border-color "#ccc"}} name]
+   `[:table {:style {:border-collapse "collapse"}}
+     [:tbody
+      ~@(for [{:keys [email first-name last-name language-prefs coaching-prefs experience-clojure]} coaches]
+          [groups-group-row {:key email
+                             :email email
+                             :title (str coaching-prefs "\nExperience Clojure: " experience-clojure "/5" )
+                             :language-prefs language-prefs
+                             :on-move :assign-coach
+                             :on-click #(dispatch [:select-coach email])
+                             :seedling? (= "Coding beginners (ppl who never code before)" coaching-prefs)}
+           ^{:key email} [:strong first-name " " last-name]])
+
+      ~@(for [{:keys [email first-name last-name language-prefs experience-other experience-clojure] :or {experience-other ""} :as attendee} attendees]
+          [groups-group-row {:key email
+                             :title (str experience-other "\nClojure: " experience-clojure)
+                             :email email
+                             :language-prefs language-prefs
+                             :on-move :assign-attendee
+                             :on-click #(dispatch [:select-attendee email])
+                             :clojure? (re-find #"(?i)yes" experience-clojure)
+                             :seedling? (beginner? attendee)
+                             :ruby? (re-find #"(?i)ruby|rails" experience-other)
+                             :python? (re-find #"(?i)python|django" experience-other)
+                             :js? (re-find #"(?i)javascript|JS" experience-other)
+                             }
+           first-name " " last-name])]]])
+
+
+(defn groups-panel []
+  (let [groups (subscribe [:groups])
+        unassigned-coaches (subscribe [:unassigned-coaches])
+        unassigned-attendees (subscribe [:unassigned-attendees])]
+    (fn []
+      [:div#groups-panel
+       [menu-bar "Groups"]
+
+       (doall
+        (for [{:keys [id name attendees coaches] :as group} @groups]
+          ^{:key id}
+          [groups-group group]))
+
+       [groups-group {:name "Unassigned"
+                      :coaches @unassigned-coaches
+                      :attendees @unassigned-attendees}]
+
+       [:div.f3 {:style {:line-height "45px"}}
+        [:div.br-100.washed-green.bg-green.dim.pointer.tc.fixed.shadow-1
+         {:style {:bottom "0.5em" :right "0.5em" :width "45px" :height "45px"}}
+         [:a {:on-click #(dispatch [:add-group])} "+"]]]])))
+
 (defn menu-panel []
   [:div#menu-panel
    [menu-bar "Menu"]
    [:ul.list
     [:li [:a {:on-click #(dispatch [:transition-state :attendee-list])} "Attendee List"]]
     [:li [:a {:on-click #(dispatch [:transition-state :coaches-list])} "Coaches List"]]
-    [:li [:a {:on-click #(dispatch [:transition-state :invite-more])} "Invite More"]]
-    [:li [:a {:on-click #(dispatch [:summarize])} "Generate Result Sheets"]]
-    [:li [:a {:on-click #(dispatch [:fetch-app-data])} "Reload Spreadsheet Data"]]
-    [:li [:a {:on-click #(dispatch [:transition-state :inspector])} "Export EDN"]]]])
+    [:li {:style {:border-width "2px"}}
+     [:a {:on-click #(dispatch [:transition-state :groups])} "Groups"]]
+
+    [:li [:a {:on-click #(dispatch [:transition-state :invite-more])} "✉ Invite More"]]
+    [:li [:a {:on-click #(dispatch [:summarize])} "⚙ Generate Result Sheets"]]
+    [:li [:a {:on-click #(dispatch [:fetch-app-data])} "🗘 Reload Spreadsheet Data"]]
+    [:li [:a {:on-click #(dispatch [:transition-state :inspector])} "🔎 Export EDN"]]]])
+
+(defn group-overlay-menu [email on-move x y]
+  (let [groups (subscribe [:groups])]
+    (fn []
+      [:div.w-100.h-100
+       {:on-click #(dispatch [:hide-group-overlay-menu])
+        :style {:z-index 99998 :top 0 :left 0 :position "absolute"}}
+       [:div.bg-white.b-gray.bt.bl.br.gray {:style {:right (- 300 x)
+                                                    :top y
+                                                    :position "absolute"
+                                                    :z-index 99999}}
+        (for [group @groups]
+          ^{:key (:id group)}
+          [:div.bb.ph2.pv1.b-gray.dark-gray.hover-bg-washed-green.black.pointer
+           {:on-click #(dispatch [on-move (:id group) email])}
+           (:name group)])]])))
 
 (defn main-panel []
   (let [state (subscribe [:state])
-        menu-open? (subscribe [:menu-open?])]
+        menu-open? (subscribe [:menu-open?])
+        group-overlay (subscribe [:group-overlay-menu])]
     (fn []
       [:div
        [:style {:type "text/css"} (css styles/styles)]
+       (when-let [[email on-move x y] @group-overlay]
+         [group-overlay-menu email on-move x y])
        (if @menu-open?
-         [menu-panel]
-         (case @state
-           :attendee-list      [attendee-list-panel]
-           :coaches-list       [coaches-list-panel]
-           :invite-more        [invite-more-panel]
-           :selected-attendee  [selected-attendee-panel]
-           :selected-coach     [selected-coach-panel]
-           :inspector          [inspector-panel]
-           :emails             [emails-panel]
-           :working            [:div
-                                [menu-bar "Working..."]
-                                "Working..."]
-           :done               [:div
-                                [menu-bar "Done!"]
-                                "Done!"]
-           [:div "Unkown state:" (prn-str @state)]))])))
+         [menu-panel])
+       (case @state
+         :attendee-list      [attendee-list-panel]
+         :coaches-list       [coaches-list-panel]
+         :groups             [groups-panel]
+         :invite-more        [invite-more-panel]
+         :selected-attendee  [selected-attendee-panel]
+         :selected-coach     [selected-coach-panel]
+         :inspector          [inspector-panel]
+         :emails             [emails-panel]
+         :working            [:div
+                              [menu-bar "Working..."]
+                              "Working..."]
+         :done               [:div
+                              [menu-bar "Done!"]
+                              "Done!"]
+         [:div "Unkown state:" (prn-str @state)])])))
