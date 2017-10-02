@@ -80,7 +80,9 @@
     (let [[url] args]
       (assoc data
              :coaches-spreadsheet url
-             :coaches (map-by-email (coaches/read-spreadsheet-data url))))
+             :coaches (if (exists? js/SpreadsheetApp)
+                        (map-by-email (coaches/read-spreadsheet-data url))
+                        {})))
 
     :else
     data))

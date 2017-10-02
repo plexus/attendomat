@@ -9,7 +9,13 @@
     <div id="attendomat">
       <h3 style="padding-top: 2em; text-align: center;">Loading...</h3>
     </div>
-    <script src="https://rawgit.com/plexus/b204d39060f56b2dc5795b4b9a322a83/raw/gui.js"></script>
-    <script>frontend.core.init();</script>
+    <script src="https://rawgit.com/plexus/aa44a0193e28f579e56331e752533488/raw/gui.js"></script>
+    <script>
+     try {
+       frontend.core.init();
+     } catch(e) {
+       document.getElementById("attendomat").innerHTML="Frontend failed to load. " + e
+     }
+    </script>
   </body>
 </html>

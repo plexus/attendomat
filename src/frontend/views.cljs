@@ -253,14 +253,15 @@
             [:p travel]])]))))
 
 (defn selected-coach-panel []
-  (let [coach (subscribe [:selected-coach])]
+  (let [coach (subscribe [:selected-coach])
+        previous-state (subscribe [:previous-state])]
     (fn []
       (let [{:keys [first-name last-name email food-prefs phone experience-coaching
                     history state travel childcare coaching-prefs assistance
                     gender tshirt-size timestamp floating-coach? other-langs
                     experience-clojure language-prefs comment]} @coach]
         [:div#selected-coach
-         [menu-bar "Coach" :coaches-list]
+         [menu-bar "Coach" @previous-state]
          [:div.tc.pv2 {:class (str "state-" (name state))}
           [:div.f3 str first-name " " last-name]
           [:div.small-caps (name state)]]
@@ -358,13 +359,14 @@
            ^{:key (:id message)} [email-entry message])]))))
 
 
-(defn groups-group-row [{:keys [on-click title email language-prefs on-move seedling? ruby? python? js? clojure?]} & content]
+(defn groups-group-row [{:keys [on-click title email language-prefs on-move seedling? ruby? python? js? clojure? floating?]} & content]
   [:tr {:style {:border-bottom "1px solid #ccc"}}
    [:td.pl1.w-100
     [:a.pointer.underline-hover.hover-dark-blue {:on-click on-click :title title}
      content]]
    [:td.tc {:style {:min-width "3em"}}
     (when seedling? [:span {:title "Beginner"} "🌱"])
+    (when floating? [:span {:title "Floating coach"} "🍃"])
     (when clojure? [:span.clojure-logo {:title "Clojure experience"} " "])
     (when ruby? [:span {:title "Ruby"} "💎"])
     (when python? [:span {:title "Python"} "🐍"])
@@ -386,14 +388,15 @@
    [:h3.mt3.mb1.gray.bb.ph1 {:style {:border-color "#ccc"}} name]
    `[:table {:style {:border-collapse "collapse"}}
      [:tbody
-      ~@(for [{:keys [email first-name last-name language-prefs coaching-prefs experience-clojure]} coaches]
+      ~@(for [{:keys [email first-name last-name language-prefs coaching-prefs experience-clojure floating-coach? other-langs]} coaches]
           [groups-group-row {:key email
                              :email email
-                             :title (str coaching-prefs "\nExperience Clojure: " experience-clojure "/5" )
+                             :title (str coaching-prefs "\nExperience Clojure: " experience-clojure "/5\n" other-langs)
                              :language-prefs language-prefs
                              :on-move :assign-coach
                              :on-click #(dispatch [:select-coach email])
-                             :seedling? (= "Coding beginners (ppl who never code before)" coaching-prefs)}
+                             :seedling? (= "Coding beginners (ppl who never code before)" coaching-prefs)
+                             :floating? (= "Yes" floating-coach?)}
            ^{:key email} [:strong first-name " " last-name]])
 
       ~@(for [{:keys [email first-name last-name language-prefs experience-other experience-clojure] :or {experience-other ""} :as attendee} attendees]

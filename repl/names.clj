@@ -15,7 +15,7 @@
          (name-seq))))
 
 (run! println
-      (take 110
+      (take 32
             (map (fn [[first last]]
-                   (str/join "\t" [first last (str/lower-case (str first "." last "@" (rand-nth domains)))]))
+                   (str/join "\t" [(str/lower-case (str first "." last "@" (rand-nth domains))) first last ]))
                  (name-seq))))

@@ -13,7 +13,7 @@
   (map vec (frequencies (map field attendees))))
 
 (defn ^:export summarize []
-  (let [attendees (:attendees (es/app-data))
+  (let [attendees (vals (:attendees (es/app-data)))
         accepted (filter-state :accepted attendees)
         cols [:first-name :last-name :email :language-prefs
               :age :gender :attended-before :experience-other
