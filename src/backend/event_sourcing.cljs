@@ -55,6 +55,7 @@
   (case type
     "CREATE_GROUP"
     (assoc groups (first args) {:id (first args)
+                                :index (count groups)
                                 :name (second args)
                                 :attendees []
                                 :coaches []})))

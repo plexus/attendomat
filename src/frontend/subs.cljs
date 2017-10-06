@@ -86,7 +86,7 @@
 
 (reg-sub :groups
          (fn [{:keys [groups]} _]
-           (vals groups)))
+           (sort-by :index (vals groups))))
 
 (defn unassigned [type db _]
   (let [people (vals (get db type))]

@@ -383,9 +383,9 @@
   (and (re-find #"No" experience-clojure)
        (re-find #"(?i)^\s*$|^no|^nein" experience-other)))
 
-(defn groups-group [{:keys [id name attendees coaches]}]
+(defn groups-group [{:keys [id name index attendees coaches]}]
   [:div.group.pb2
-   [:h3.mt3.mb1.gray.bb.ph1 {:style {:border-color "#ccc"}} name]
+   [:h3.mt3.mb1.gray.bb.ph1 {:style {:border-color "#ccc"}} (when index (list (inc index) ". ")) name]
    `[:table {:style {:border-collapse "collapse"}}
      [:tbody
       ~@(for [{:keys [email first-name last-name language-prefs coaching-prefs experience-clojure floating-coach? other-langs]} coaches]

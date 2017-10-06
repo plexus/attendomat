@@ -1,3 +1,5 @@
+(def hostname "850eccbc.ngrok.io")
+
 (defproject attendomat "0.1.0-SNAPSHOT"
   :license {:name "Mozilla Public License 2.0"
             :url "https://www.mozilla.org/en-US/MPL/2.0/"}
@@ -20,10 +22,10 @@
               {:gui-dev
                {:source-paths ["src"]
                 :figwheel {:on-jsload "frontend.core/mount-root"
-                           :websocket-url "wss://5a301fd7.ngrok.io/figwheel-ws"}
+                           :websocket-url ~(str "wss://" hostname "/figwheel-ws")}
                 :compiler {:main frontend.core
                            :optimizations :none
-                           :asset-path "https://5a301fd7.ngrok.io/js/gui-dev"
+                           :asset-path ~(str "https://" hostname "/js/gui-dev")
                            :output-to "resources/public/js/gui-dev.js"
                            :output-dir "resources/public/js/gui-dev"
                            :preloads [devtools.preload]

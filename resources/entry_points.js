@@ -1,4 +1,4 @@
-var sidebarFile = "sidebar-figwheel.html";
+var sidebarFile = "sidebar.html";
 
 function onOpen(e) {
   return backend.core.on_open_hook(e);
